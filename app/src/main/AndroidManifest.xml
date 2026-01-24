@@ -41,6 +41,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Amulet_android_app">
+
+        <meta-data
+            android:name="com.onesignal.NotificationServiceExtension"
+            android:value="com.example.amulet.core.notifications.HugNotificationServiceExtension" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

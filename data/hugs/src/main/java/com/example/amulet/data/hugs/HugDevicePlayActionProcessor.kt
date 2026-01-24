@@ -44,7 +44,11 @@ class HugDevicePlayActionProcessor @Inject constructor(
         val pattern = patternsRepository.getPatternById(PatternId(patternIdValue)).firstOrNull()
             ?: return Err(AppError.NotFound)
 
-        val result = playbackService.playOnConnectedDevice(pattern.spec, intensity)
+        val result = playbackService.playOnConnectedDevice(
+            spec = pattern.spec,
+            intensity = intensity,
+            isPreview = true,
+        )
 
         return result.fold(
             success = { Ok(Unit) },

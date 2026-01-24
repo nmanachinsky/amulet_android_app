@@ -12,6 +12,7 @@ import com.onesignal.notifications.INotificationLifecycleListener
 import com.onesignal.notifications.INotificationWillDisplayEvent
 import com.onesignal.user.subscriptions.IPushSubscriptionObserver
 import com.onesignal.user.subscriptions.PushSubscriptionChangedState
+import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -67,14 +68,7 @@ class OneSignalManager @Inject constructor(
         // Обработка пуша, когда приложение на переднем плане.
         val foregroundListener = object : INotificationLifecycleListener {
             override fun onWillDisplay(event: INotificationWillDisplayEvent) {
-                val additional = event.notification.additionalData
-                val data: Map<String, String> =
-                    (additional as? Map<*, *>)
-                        ?.mapNotNull { (k, v) ->
-                            (k as? String)?.let { key -> key to (v?.toString() ?: "") }
-                        }
-                        ?.toMap()
-                        ?: emptyMap()
+                val data = additionalDataToMap(event.notification.additionalData)
 
                 pushNotificationRouter.handle(data)
                 // Ничего не блокируем: уведомление покажется как обычно.
@@ -85,14 +79,7 @@ class OneSignalManager @Inject constructor(
         // Обработка клика по уведомлению (deeplink в экран объятий / конкретное объятие).
         val clickListener = object : INotificationClickListener {
             override fun onClick(event: INotificationClickEvent) {
-                val additional = event.notification.additionalData
-                val data: Map<String, String> =
-                    (additional as? Map<*, *>)
-                        ?.mapNotNull { (k, v) ->
-                            (k as? String)?.let { key -> key to (v?.toString() ?: "") }
-                        }
-                        ?.toMap()
-                        ?: emptyMap()
+                val data = additionalDataToMap(event.notification.additionalData)
 
                 val type = data["type"]
                 val hugId = data["hugId"]
@@ -110,6 +97,17 @@ class OneSignalManager @Inject constructor(
             }
         }
         OneSignal.Notifications.addClickListener(clickListener)
+    }
+
+    private fun additionalDataToMap(additionalData: Any?): Map<String, String> {
+        val json = additionalData as? JSONObject ?: return emptyMap()
+        val result = mutableMapOf<String, String>()
+        val keys = json.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            result[key] = json.opt(key)?.toString().orEmpty()
+        }
+        return result
     }
 
     fun playerId(): StateFlow<String?> = playerIdFlow.asStateFlow()

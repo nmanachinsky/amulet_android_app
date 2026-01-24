@@ -1,6 +1,8 @@
 package com.example.amulet.shared.domain.patterns.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 
 @Serializable
 data class PatternTimeline(
@@ -17,16 +19,20 @@ data class TimelineTrack(
 )
 
 @Serializable
-sealed interface TimelineTarget
+@JsonClassDiscriminator("type")
+sealed class TimelineTarget
 
 @Serializable
-data class TargetLed(val index: Int) : TimelineTarget
+@SerialName("led")
+data class TargetLed(val index: Int) : TimelineTarget()
 
 @Serializable
-data class TargetGroup(val indices: List<Int>) : TimelineTarget
+@SerialName("group")
+data class TargetGroup(val indices: List<Int>) : TimelineTarget()
 
 @Serializable
-data object TargetRing : TimelineTarget
+@SerialName("ring")
+data object TargetRing : TimelineTarget()
 
 @Serializable
 data class TimelineClip(

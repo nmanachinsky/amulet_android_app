@@ -10,11 +10,13 @@ import com.example.amulet.shared.domain.patterns.PatternPlaybackService
 import com.example.amulet.shared.domain.patterns.usecase.GetPatternByIdUseCase
 import com.example.amulet.shared.domain.patterns.usecase.EnsurePatternLoadedUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetUserPreferencesStreamUseCase
+import com.example.amulet.shared.core.logging.Logger
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -59,21 +61,42 @@ class ExecuteRemoteHugCommandUseCase(
             ?: return Err(AppError.NotFound)
 
         // 1. Пробуем взять паттерн локально.
+        Logger.d(
+            "ExecuteRemoteHugCommandUseCase: resolve pattern start hugId=${command.hugId?.value} patternId=${patternId.value}",
+            tag = "ExecuteRemoteHugCommandUseCase"
+        )
         var pattern = getPatternById(patternId).firstOrNull()
         if (pattern == null) {
+            Logger.d(
+                "ExecuteRemoteHugCommandUseCase: pattern not in local DB -> ensurePatternLoaded patternId=${patternId.value}",
+                tag = "ExecuteRemoteHugCommandUseCase"
+            )
             // 2. Пытаемся загрузить паттерн с сервера и сохранить локально.
             val ensured = ensurePatternLoaded(patternId)
             if (!ensured.isOk) {
+                val error = ensured.component2()
+                Logger.w(
+                    "ExecuteRemoteHugCommandUseCase: ensurePatternLoaded failed patternId=${patternId.value} error=$error",
+                    tag = "ExecuteRemoteHugCommandUseCase"
+                )
                 // Прокидываем ошибку загрузки паттерна наверх.
                 return ensured
             }
 
             // 3. Повторно читаем из репозитория.
-            pattern = getPatternById(patternId).firstOrNull()
-                ?: return Err(AppError.NotFound)
+            pattern = getPatternById(patternId).filterNotNull().first()
         }
 
-        val playbackResult = playbackService.playOnConnectedDevice(pattern.spec, intensity)
+        Logger.d(
+            "ExecuteRemoteHugCommandUseCase: pattern resolved patternId=${patternId.value} -> play",
+            tag = "ExecuteRemoteHugCommandUseCase"
+        )
+
+        val playbackResult = playbackService.playOnConnectedDevice(
+            spec = pattern.spec,
+            intensity = intensity,
+            isPreview = true,
+        )
 
         playbackResult.onSuccess {
             val hugId = command.hugId

@@ -697,14 +697,17 @@ class PatternsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun ensurePatternLoaded(id: PatternId): AppResult<Unit> {
+        Logger.d("ensurePatternLoaded: start patternId=${id.value}", "PatternsRepositoryImpl")
         return try {
             // Если паттерн уже есть локально, ничего не делаем.
             val existing = localDataSource.observeById(id.value).first()
             if (existing != null) {
+                Logger.d("ensurePatternLoaded: already in local DB patternId=${id.value}", "PatternsRepositoryImpl")
                 return Ok(Unit)
             }
 
             // Пытаемся получить паттерн с сервера.
+            Logger.d("ensurePatternLoaded: fetch from remote patternId=${id.value}", "PatternsRepositoryImpl")
             val remoteResult = remoteDataSource.getPattern(id.value)
             val dto = remoteResult.component1()
             if (dto != null) {
@@ -712,13 +715,24 @@ class PatternsRepositoryImpl @Inject constructor(
                 val tagIds = tags.map { it.id }
                 val sharedWith = dto.sharedWith ?: emptyList()
 
-                val entity = dto.toEntity()
+                val entity = dto.toEntity().copy(ownerId = currentUserId)
+                Logger.d("ensurePatternLoaded: upsert local patternId=${id.value}", "PatternsRepositoryImpl")
                 localDataSource.upsertPatternWithRelations(
                     pattern = entity,
                     tags = tags,
                     tagIds = tagIds,
                     sharedUserIds = sharedWith
                 )
+
+                val inserted = localDataSource.observeById(id.value).first()
+                if (inserted == null) {
+                    Logger.e(
+                        "ensurePatternLoaded: local upsert finished but pattern still missing in DB patternId=${id.value}",
+                        throwable = IllegalStateException("Pattern not found after upsert: ${id.value}"),
+                        tag = "PatternsRepositoryImpl"
+                    )
+                    return Err(AppError.DatabaseError)
+                }
 
                 // Дополнительно подтягиваем сегменты и маркеры таймлайна с сервера.
                 runCatching {
@@ -728,7 +742,7 @@ class PatternsRepositoryImpl @Inject constructor(
                         // Перезаписываем локальные сегменты без постановки задач в Outbox.
                         localDataSource.deleteSegmentsForPattern(id.value)
                         segmentDtos.forEach { segmentDto ->
-                            val segmentEntity = segmentDto.toEntity()
+                            val segmentEntity = segmentDto.toEntity().copy(ownerId = currentUserId)
                             val segmentTags = segmentDto.tags?.toTagEntities() ?: emptyList()
                             val segmentTagIds = segmentTags.map { it.id }
                             localDataSource.upsertPatternWithRelations(
@@ -754,11 +768,12 @@ class PatternsRepositoryImpl @Inject constructor(
                     }
                 }
 
+                Logger.d("ensurePatternLoaded: done patternId=${id.value}", "PatternsRepositoryImpl")
                 Ok(Unit)
             } else {
                 val error = remoteResult.component2() ?: AppError.Unknown
                 Logger.e(
-                    "Ошибка загрузки паттерна с сервера: $error",
+                    "ensurePatternLoaded: remote returned null dto patternId=${id.value} error=$error",
                     throwable = Exception(error.toString()),
                     tag = "PatternsRepositoryImpl"
                 )

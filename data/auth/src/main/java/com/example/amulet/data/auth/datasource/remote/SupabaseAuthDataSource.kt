@@ -1,6 +1,6 @@
 package com.example.amulet.data.auth.datasource.remote
 
-import com.example.amulet.shared.core.AppError
+import com.example.amulet.data.auth.mapper.AuthErrorMapper
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.auth.model.UserCredentials
@@ -13,7 +13,6 @@ import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.github.jan.supabase.auth.user.UserSession
-import io.github.jan.supabase.exceptions.RestException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -21,13 +20,14 @@ import kotlinx.coroutines.withContext
 
 @Singleton
 class SupabaseAuthDataSource @Inject constructor(
-    private val supabaseClient: SupabaseClient
+    private val supabaseClient: SupabaseClient,
+    private val errorMapper: AuthErrorMapper
 ) : AuthRemoteDataSource {
 
     private val auth get() = supabaseClient.auth
 
     override suspend fun signUp(credentials: UserCredentials): AppResult<UserId> =
-        runAuth("signUp") {
+        executeAuth("signUp") {
             auth.signUpWith(Email) {
                 this.email = credentials.email
                 this.password = credentials.password
@@ -36,7 +36,7 @@ class SupabaseAuthDataSource @Inject constructor(
         }
 
     override suspend fun signIn(credentials: UserCredentials): AppResult<UserId> =
-        runAuth("signIn") {
+        executeAuth("signIn") {
             auth.signInWith(Email) {
                 this.email = credentials.email
                 this.password = credentials.password
@@ -45,7 +45,7 @@ class SupabaseAuthDataSource @Inject constructor(
         }
 
     override suspend fun signInWithGoogle(idToken: String, rawNonce: String?): AppResult<UserId> =
-        runAuth("signInWithGoogle") {
+        executeAuth("signInWithGoogle") {
             auth.signInWith(IDToken) {
                 this.idToken = idToken
                 this.provider = Google
@@ -55,55 +55,43 @@ class SupabaseAuthDataSource @Inject constructor(
         }
 
     override suspend fun signOut(): AppResult<Unit> = runCatching {
-        Logger.d("Supabase signOut requested", TAG)
+        Logger.d("signOut: starting", TAG)
         withContext(Dispatchers.IO) {
             auth.signOut()
         }
     }.fold(
         onSuccess = {
-            Logger.i("Supabase signOut success", TAG)
+            Logger.i("signOut: success", TAG)
             Ok(Unit)
         },
         onFailure = { throwable ->
-            Logger.w("Supabase signOut failed", throwable, TAG)
-            Err(throwable.toAppError())
+            Logger.w("signOut: failed", throwable, TAG)
+            Err(errorMapper.map(throwable))
         }
     )
 
-    private suspend fun runAuth(
+    private suspend fun executeAuth(
         action: String,
         block: suspend () -> UserSession?
     ): AppResult<UserId> = runCatching {
-        Logger.d("$action requested", TAG)
+        Logger.d("$action: starting", TAG)
         withContext(Dispatchers.IO) { block() }
     }.fold(
         onSuccess = { session ->
             if (session == null) {
-                Logger.w("$action: session not available (email confirmation required?)", null, TAG)
-                return Err(AppError.Unauthorized)
+                Logger.w("$action: session not available (email confirmation required?)", tag = TAG)
+                Err(com.example.amulet.shared.core.AppError.Unauthorized)
+            } else {
+                val userId = session.user?.id ?: error("Missing Supabase user")
+                Logger.i("$action: success userId=$userId", TAG)
+                Ok(UserId(userId))
             }
-            val userId = session.user?.id ?: error("Missing Supabase user")
-            Logger.i("$action success user=$userId", TAG)
-            Ok(UserId(userId))
         },
         onFailure = { throwable ->
-            Logger.w("$action failed", throwable, TAG)
-            Err(throwable.toAppError())
+            Logger.w("$action: failed", throwable, TAG)
+            Err(errorMapper.map(throwable))
         }
     )
-
-
-    private fun Throwable.toAppError(): AppError = when (this) {
-        is RestException -> when (statusCode) {
-            400, 422 -> AppError.Validation(
-                message?.let { mapOf("message" to it) } ?: emptyMap()
-            )
-            401 -> AppError.Unauthorized
-            403 -> AppError.Forbidden
-            else -> AppError.Unknown
-        }
-        else -> AppError.Unknown
-    }
 
     private companion object {
         private const val TAG = "SupabaseAuthDataSource"

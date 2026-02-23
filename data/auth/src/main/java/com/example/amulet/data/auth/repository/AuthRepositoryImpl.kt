@@ -6,6 +6,7 @@ import com.example.amulet.data.auth.datasource.remote.AuthRemoteDataSource
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
+import com.example.amulet.shared.domain.auth.model.AuthState
 import com.example.amulet.shared.domain.auth.model.UserCredentials
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.user.model.UserId
@@ -15,6 +16,8 @@ import com.github.michaelbull.result.flatMap
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
@@ -23,11 +26,16 @@ class AuthRepositoryImpl @Inject constructor(
     private val userSessionManager: UserSessionManager
 ) : AuthRepository {
 
+    override val authState: StateFlow<AuthState> = userSessionManager.authState
+
     override suspend fun signUp(credentials: UserCredentials): AppResult<UserId> {
         Logger.d("signUp: starting registration", TAG)
         return remoteDataSource.signUp(credentials).also { result ->
             when (result.isOk) {
-                true -> Logger.i("signUp: success userId=${result.value.value}", TAG)
+                true -> {
+                    userSessionManager.setLoggedIn(result.value)
+                    Logger.i("signUp: success userId=${result.value.value}", TAG)
+                }
                 false -> Logger.w("signUp: failed error=${result.error}", tag = TAG)
             }
         }
@@ -37,7 +45,10 @@ class AuthRepositoryImpl @Inject constructor(
         Logger.d("signIn: starting authentication", TAG)
         return remoteDataSource.signIn(credentials).also { result ->
             when (result.isOk) {
-                true -> Logger.i("signIn: success userId=${result.value.value}", TAG)
+                true -> {
+                    userSessionManager.setLoggedIn(result.value)
+                    Logger.i("signIn: success userId=${result.value.value}", TAG)
+                }
                 false -> Logger.w("signIn: failed error=${result.error}", tag = TAG)
             }
         }
@@ -47,7 +58,10 @@ class AuthRepositoryImpl @Inject constructor(
         Logger.d("signInWithGoogle: starting Google authentication", TAG)
         return remoteDataSource.signInWithGoogle(idToken, rawNonce).also { result ->
             when (result.isOk) {
-                true -> Logger.i("signInWithGoogle: success userId=${result.value.value}", TAG)
+                true -> {
+                    userSessionManager.setLoggedIn(result.value)
+                    Logger.i("signInWithGoogle: success userId=${result.value.value}", TAG)
+                }
                 false -> Logger.w("signInWithGoogle: failed error=${result.error}", tag = TAG)
             }
         }
@@ -121,6 +135,14 @@ class AuthRepositoryImpl @Inject constructor(
             }
         )
     }
+
+    override fun isLoggedIn(): Boolean = userSessionManager.isLoggedIn()
+
+    override fun isGuest(): Boolean = userSessionManager.isGuest()
+
+    override fun getCurrentUserId(): UserId? = userSessionManager.getCurrentUserId()
+
+    override fun hasActiveSession(): Boolean = userSessionManager.hasActiveSession()
 
     private companion object {
         const val TAG = "AuthRepositoryImpl"

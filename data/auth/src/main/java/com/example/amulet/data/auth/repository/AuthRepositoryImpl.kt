@@ -69,10 +69,11 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun signOut(): AppResult<Unit> {
         Logger.d("signOut: starting logout", TAG)
+        val currentUserId = userSessionManager.getCurrentUserId()
         return remoteDataSource.signOut().flatMap {
             runCatching {
                 userSessionManager.setLoggedOut()
-                // localDataSource.clearAll() // TODO: раскомментировать если нужно удалять данные при выходе
+                currentUserId?.let { localDataSource.deleteByUserId(it.value) }
             }.fold(
                 onSuccess = {
                     Logger.i("signOut: success", TAG)

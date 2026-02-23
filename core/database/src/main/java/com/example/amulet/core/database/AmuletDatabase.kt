@@ -95,7 +95,7 @@ import com.example.amulet.core.database.entity.UserPracticeStatsEntity
         RemoteKeyEntity::class,
         UserMoodEntryEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 @TypeConverters(DatabaseTypeConverters::class, UserConverters::class, InstantConverters::class)

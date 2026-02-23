@@ -30,16 +30,9 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun fetchProfile(userId: UserId): AppResult<User> {
         Logger.d("fetchProfile: userId=${userId.value}", TAG)
-        return remoteDataSource.fetchUser(userId.value).fold(
+        return fetchAndCacheUser(userId.value).fold(
             success = { dto ->
-                val existingResult = localDataSource.findById(dto.id)
-                val existing = existingResult.value
-                val mergedAvatarUrl = mergeAvatarUrl(dto, existing)
-
-                val user = mapper.toDomain(dto).copy(avatarUrl = mergedAvatarUrl)
-                val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
-
-                localDataSource.upsert(entity)
+                val user = mapper.toDomain(dto)
                 Logger.i("fetchProfile: success userId=${user.id.value}", TAG)
                 Ok(user)
             },
@@ -55,6 +48,33 @@ class UserRepositoryImpl @Inject constructor(
             }
         )
     }
+
+    override suspend fun ensureProfileLoaded(userId: UserId): AppResult<Unit> {
+        Logger.d("ensureProfileLoaded: userId=${userId.value}", TAG)
+        return fetchAndCacheUser(userId.value).fold(
+            success = {
+                Logger.i("ensureProfileLoaded: success userId=${userId.value}", TAG)
+                Ok(Unit)
+            },
+            failure = { error ->
+                Logger.e("ensureProfileLoaded: failed error=$error", tag = TAG)
+                Err(error)
+            }
+        )
+    }
+
+    private suspend fun fetchAndCacheUser(userId: String): AppResult<UserDto> =
+        remoteDataSource.fetchUser(userId).fold(
+            success = { dto ->
+                val existingResult = localDataSource.findById(dto.id)
+                val existing = existingResult.value
+                val mergedAvatarUrl = mergeAvatarUrl(dto, existing)
+                val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
+                localDataSource.upsert(entity)
+                Ok(dto)
+            },
+            failure = { error -> Err(error) }
+        )
 
     override fun observeUser(userId: UserId): Flow<User?> {
         return localDataSource.observeById(userId.value)

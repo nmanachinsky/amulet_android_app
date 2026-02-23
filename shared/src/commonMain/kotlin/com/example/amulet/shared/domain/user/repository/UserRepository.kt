@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
     suspend fun fetchProfile(userId: UserId): AppResult<User>
+    suspend fun ensureProfileLoaded(userId: UserId): AppResult<Unit>
 
     fun observeUser(userId: UserId): Flow<User?>
 

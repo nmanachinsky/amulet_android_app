@@ -10,12 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-sealed interface AuthState {
-    data object Loading : AuthState
-    data object LoggedOut : AuthState
-    data object Guest : AuthState
-    data object LoggedIn : AuthState
-}
+
 
 @HiltViewModel
 class SessionViewModel @Inject constructor(

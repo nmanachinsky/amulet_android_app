@@ -1,6 +1,9 @@
 package com.example.amulet.shared.di
 
 import com.example.amulet.shared.domain.auth.usecase.EnableGuestModeUseCase
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentSessionUseCase
+import com.example.amulet.shared.domain.auth.usecase.HasActiveSessionUseCase
+import com.example.amulet.shared.domain.auth.usecase.ObserveAuthStateUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInWithGoogleUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
@@ -66,6 +69,9 @@ private val sharedModule = module {
     factory { SignOutUseCase(get()) }
     factory { SignUpUseCase(get(), get()) }
     factory { EnableGuestModeUseCase(get()) }
+    factory { ObserveAuthStateUseCase(get()) }
+    factory { GetCurrentSessionUseCase(get()) }
+    factory { HasActiveSessionUseCase(get()) }
     
     // Initialization UseCases
     factory { SeedLocalDataUseCase(get(), get(), get()) }

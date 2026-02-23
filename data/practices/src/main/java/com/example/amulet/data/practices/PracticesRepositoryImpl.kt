@@ -9,8 +9,6 @@ import com.example.amulet.data.practices.seed.PracticeSeedData
 import com.example.amulet.data.practices.seed.toSeed
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.practices.PracticesRepository
 import com.example.amulet.shared.domain.practices.model.Practice

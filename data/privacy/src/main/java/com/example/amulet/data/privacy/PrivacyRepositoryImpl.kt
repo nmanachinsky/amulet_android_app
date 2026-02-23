@@ -2,9 +2,6 @@ package com.example.amulet.data.privacy
 
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
-import com.example.amulet.shared.core.auth.UserSessionUpdater
 import com.example.amulet.shared.domain.privacy.PrivacyRepository
 import com.example.amulet.shared.domain.privacy.model.UserConsents
 import com.example.amulet.shared.domain.user.model.User

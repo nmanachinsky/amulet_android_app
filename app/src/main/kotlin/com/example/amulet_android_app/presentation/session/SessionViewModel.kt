@@ -2,8 +2,6 @@ package com.example.amulet_android_app.presentation.session
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow

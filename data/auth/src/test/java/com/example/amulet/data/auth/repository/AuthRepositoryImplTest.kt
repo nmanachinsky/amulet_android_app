@@ -3,7 +3,6 @@ package com.example.amulet.data.auth.repository
 import com.example.amulet.data.auth.datasource.local.AuthLocalDataSource
 import com.example.amulet.data.auth.datasource.remote.AuthRemoteDataSource
 import com.example.amulet.shared.core.AppError
-import com.example.amulet.shared.core.auth.UserSessionUpdater
 import com.example.amulet.shared.domain.auth.model.UserCredentials
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.model.UserId

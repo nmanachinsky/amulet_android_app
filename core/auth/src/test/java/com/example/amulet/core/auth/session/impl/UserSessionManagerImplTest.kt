@@ -2,9 +2,9 @@ package com.example.amulet.core.auth.session.impl
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
+import com.example.amulet.core.auth.UserSessionManagerImpl
 import com.example.amulet.core.auth.datastore.UserSessionPreferencesSerializer
 import com.example.amulet.core.auth.session.proto.UserSessionPreferences
-import com.example.amulet.shared.core.auth.UserSessionContext
 import com.example.amulet.shared.domain.privacy.model.UserConsents
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.model.UserId

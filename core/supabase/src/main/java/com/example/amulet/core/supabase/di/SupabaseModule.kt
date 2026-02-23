@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.amulet.shared.core.auth.IdTokenProvider
+import com.example.amulet.core.supabase.auth.IdTokenProvider
 import com.example.amulet.core.supabase.SupabaseEnvironment
 import com.example.amulet.core.supabase.auth.SupabaseAuthManager
 import com.example.amulet.core.supabase.auth.SupabaseIdTokenProvider

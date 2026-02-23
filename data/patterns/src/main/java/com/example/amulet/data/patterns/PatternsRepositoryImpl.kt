@@ -16,8 +16,6 @@ import com.example.amulet.data.patterns.seed.PresetPatternSeeds
 import com.example.amulet.data.patterns.seed.PracticePatternSeeds
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.patterns.PatternsRepository
 import com.example.amulet.shared.domain.patterns.model.Pattern

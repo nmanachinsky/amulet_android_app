@@ -1,8 +1,6 @@
 package com.example.amulet_android_app.di
 
 import android.app.Application
-import com.example.amulet.shared.core.auth.UserSessionProvider
-import com.example.amulet.shared.core.auth.UserSessionUpdater
 import com.example.amulet.shared.di.sharedKoinModules
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.auth.usecase.EnableGuestModeUseCase

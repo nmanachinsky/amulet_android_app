@@ -8,8 +8,6 @@ import com.example.amulet.data.courses.seed.CourseSeed
 import com.example.amulet.data.courses.seed.CourseSeedData
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.courses.CoursesRepository
 import com.example.amulet.shared.domain.courses.model.Course

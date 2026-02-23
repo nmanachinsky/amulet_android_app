@@ -10,6 +10,7 @@ import com.example.amulet.data.auth.repository.AuthRepositoryImpl
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -30,7 +31,8 @@ interface AuthDataModule {
     @Singleton
     fun bindAuthLocalDataSource(impl: RoomAuthLocalDataSource): AuthLocalDataSource
 
-    @Binds
-    @Singleton
-    fun bindAuthErrorMapper(impl: AuthErrorMapper): AuthErrorMapper
+    companion object {
+        @Provides
+        fun provideAuthErrorMapper(): AuthErrorMapper = AuthErrorMapper
+    }
 }

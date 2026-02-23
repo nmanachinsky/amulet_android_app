@@ -11,6 +11,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import com.example.amulet.core.auth.session.AuthStateMapper
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -25,6 +26,7 @@ abstract class AuthModule {
 
         @Provides
         @Singleton
+        @Named("userSession")
         fun provideUserSessionDataStore(
             @ApplicationContext context: Context
         ): DataStore<Preferences> = context.userSessionDataStore

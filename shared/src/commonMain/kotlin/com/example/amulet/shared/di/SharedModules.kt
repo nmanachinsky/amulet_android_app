@@ -94,7 +94,7 @@ private val sharedModule = module {
     factory { UnblockPairUseCase(get()) }
     factory { DeletePairUseCase(get()) }
     factory { SendQuickReplyByGestureUseCase(get(), get()) }
-    factory { GetSecretCodesUseCase(get()) }
+    factory { GetSecretCodesUseCase(get(), get()) }
     factory { ObservePairsUseCase(get()) }
     factory { ObservePairUseCase(get()) }
     factory { ObservePairEmotionsUseCase(get()) }
@@ -147,30 +147,30 @@ private val sharedModule = module {
     
     // Patterns UseCases
     factory { PatternValidator() }
-    factory { CreatePatternUseCase(get(), get()) }
-    factory { UpdatePatternUseCase(get(), get()) }
-    factory { DeletePatternUseCase(get()) }
-    factory { GetPatternsStreamUseCase(get()) }
-    factory { GetPresetsUseCase(get()) }
-    factory { GetPatternByIdUseCase(get()) }
-    factory { EnsurePatternLoadedUseCase(get()) }
-    factory { ObserveMyPatternsUseCase(get()) }
+    factory { CreatePatternUseCase(get(), get(), get()) }
+    factory { UpdatePatternUseCase(get(), get(), get()) }
+    factory { DeletePatternUseCase(get(), get()) }
+    factory { GetPatternsStreamUseCase(get(), get()) }
+    factory { GetPresetsUseCase(get(), get()) }
+    factory { GetPatternByIdUseCase(get(), get()) }
+    factory { EnsurePatternLoadedUseCase(get(), get()) }
+    factory { ObserveMyPatternsUseCase(get(), get()) }
     factory { SyncPatternsUseCase(get()) }
-    factory { PublishPatternUseCase(get()) }
-    factory { SharePatternUseCase(get()) }
-    factory { AddTagToPatternUseCase(get()) }
-    factory { RemoveTagFromPatternUseCase(get()) }
+    factory { PublishPatternUseCase(get(), get()) }
+    factory { SharePatternUseCase(get(), get()) }
+    factory { AddTagToPatternUseCase(get(), get()) }
+    factory { RemoveTagFromPatternUseCase(get(), get()) }
     factory { GetAllTagsUseCase(get()) }
     factory { CreateTagsUseCase(get()) }
-    factory { SetPatternTagsUseCase(get()) }
+    factory { SetPatternTagsUseCase(get(), get()) }
     factory { DeleteTagsUseCase(get()) }
     factory { PreviewPatternOnDeviceUseCase(get()) }
     factory { ClearCurrentDevicePatternUseCase(get()) }
     factory { SlicePatternIntoSegmentsUseCase() }
-    factory { ApplyPatternSegmentationUseCase(get(), get()) }
+    factory { ApplyPatternSegmentationUseCase(get(), get(), get()) }
     factory { GetPatternMarkersUseCase(get()) }
-    factory { UpsertPatternMarkersUseCase(get()) }
-    factory { GetPatternSegmentsUseCase(get()) }
+    factory { UpsertPatternMarkersUseCase(get(), get()) }
+    factory { GetPatternSegmentsUseCase(get(), get()) }
     factory { PatternEditorFacade(get(), get(), get(), get()) }
 
     // Practices UseCases

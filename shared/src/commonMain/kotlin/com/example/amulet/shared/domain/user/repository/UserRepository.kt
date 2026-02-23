@@ -7,7 +7,17 @@ import com.example.amulet.shared.domain.user.model.UserId
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
+    /**
+     * Получает профиль пользователя с удаленного сервера.
+     * При ошибке делает fallback на кэш.
+     */
     suspend fun fetchProfile(userId: UserId): AppResult<User>
+
+    /**
+     * Загружает профиль в локальный кэш без возврата данных.
+     * Используется для "разогрева" кэша после авторизации.
+     */
+    suspend fun preloadProfileToCache(userId: UserId): AppResult<Unit>
 
     fun observeUser(userId: UserId): Flow<User?>
 

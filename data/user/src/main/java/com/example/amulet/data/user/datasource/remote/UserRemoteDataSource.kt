@@ -10,8 +10,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface UserRemoteDataSource {
-    suspend fun fetchCurrentUser(): AppResult<UserDto>
-
     suspend fun fetchUser(userId: String): AppResult<UserDto>
 
     /**
@@ -25,9 +23,6 @@ class UserRemoteDataSourceImpl @Inject constructor(
     private val apiService: UsersApiService,
     private val exceptionMapper: NetworkExceptionMapper
 ) : UserRemoteDataSource {
-
-    override suspend fun fetchCurrentUser(): AppResult<UserDto> =
-        safeApiCall(exceptionMapper) { apiService.getCurrentUser().user }
 
     override suspend fun fetchUser(userId: String): AppResult<UserDto> =
         safeApiCall(exceptionMapper) { apiService.getUserById(userId).user }

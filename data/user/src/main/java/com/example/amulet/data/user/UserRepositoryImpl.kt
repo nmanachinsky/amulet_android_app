@@ -1,5 +1,7 @@
 package com.example.amulet.data.user
 
+import com.example.amulet.core.database.entity.UserEntity
+import com.example.amulet.core.network.dto.user.UserDto
 import com.example.amulet.core.network.dto.user.UserUpdateRequestDto
 import com.example.amulet.data.user.datasource.local.UserLocalDataSource
 import com.example.amulet.data.user.datasource.remote.UserRemoteDataSource
@@ -32,9 +34,9 @@ class UserRepositoryImpl @Inject constructor(
             success = { dto ->
                 val existingResult = localDataSource.findById(dto.id)
                 val existing = existingResult.value
-                val mergedAvatarUrl = mapper.mergeAvatarUrl(dto, existing)
+                val mergedAvatarUrl = mergeAvatarUrl(dto, existing)
 
-                val user = mapper.toDomainFromDto(dto).copy(avatarUrl = mergedAvatarUrl)
+                val user = mapper.toDomain(dto).copy(avatarUrl = mergedAvatarUrl)
                 val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
 
                 localDataSource.upsert(entity)
@@ -75,7 +77,7 @@ class UserRepositoryImpl @Inject constructor(
                 val existing = existingResult.value
                 val mergedAvatarUrl = dto.avatarUrl ?: request.avatarUrl ?: existing?.avatarUrl
 
-                val user = mapper.toDomainFromDto(dto).copy(avatarUrl = mergedAvatarUrl)
+                val user = mapper.toDomain(dto).copy(avatarUrl = mergedAvatarUrl)
                 val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
 
                 localDataSource.upsert(entity)
@@ -92,4 +94,7 @@ class UserRepositoryImpl @Inject constructor(
     private companion object {
         const val TAG = "UserRepositoryImpl"
     }
+
+    private fun mergeAvatarUrl(dto: UserDto, existing: UserEntity?): String? =
+        dto.avatarUrl ?: existing?.avatarUrl
 }

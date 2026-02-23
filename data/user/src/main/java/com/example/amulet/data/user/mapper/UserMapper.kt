@@ -6,15 +6,11 @@ import com.example.amulet.shared.domain.privacy.model.UserConsents
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.model.UserId
 import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@Singleton
-@OptIn(ExperimentalTime::class)
-class UserMapper @Inject constructor() {
+object UserMapper {
 
-    fun toDomainFromDto(dto: UserDto): User = User(
+    fun toDomain(dto: UserDto): User = User(
         id = UserId(dto.id),
         displayName = dto.displayName,
         avatarUrl = dto.avatarUrl,
@@ -47,11 +43,6 @@ class UserMapper @Inject constructor() {
         createdAt = entity.createdAt,
         updatedAt = entity.updatedAt
     )
-
-    fun mergeAvatarUrl(dto: UserDto, existingEntity: UserEntity?): String? {
-        val dtoAvatar = dto.avatarUrl
-        return dtoAvatar ?: existingEntity?.avatarUrl
-    }
 
     private fun mapConsents(consents: Map<String, Any?>?): UserConsents? = consents?.let {
         val analytics = (it["analytics"] as? Boolean) ?: false

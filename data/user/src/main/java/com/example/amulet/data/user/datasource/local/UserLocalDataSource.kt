@@ -9,9 +9,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 
 interface UserLocalDataSource {
     suspend fun upsert(user: UserEntity): AppResult<Unit>
@@ -25,10 +23,8 @@ class UserLocalDataSourceImpl @Inject constructor(
 ) : UserLocalDataSource {
 
     override suspend fun upsert(user: UserEntity): AppResult<Unit> = runCatching {
-        withContext(Dispatchers.IO) {
-            Logger.d("upsert: userId=${user.id}", TAG)
-            userDao.upsert(user)
-        }
+        Logger.d("upsert: userId=${user.id}", TAG)
+        userDao.upsert(user)
     }.fold(
         onSuccess = {
             Logger.i("upsert: success userId=${user.id}", TAG)
@@ -41,9 +37,7 @@ class UserLocalDataSourceImpl @Inject constructor(
     )
 
     override suspend fun findById(userId: String): AppResult<UserEntity?> = runCatching {
-        withContext(Dispatchers.IO) {
-            userDao.getById(userId)
-        }
+        userDao.getById(userId)
     }.fold(
         onSuccess = { Ok(it) },
         onFailure = { throwable ->

@@ -2,59 +2,43 @@ package com.example.amulet.shared.domain.courses.usecase
 
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.example.amulet.shared.domain.courses.CoursesRepository
 import com.example.amulet.shared.domain.courses.model.CourseId
 import com.example.amulet.shared.domain.courses.model.EnrollmentParams
 import com.example.amulet.shared.domain.practices.PracticesRepository
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.flatMap
 import kotlinx.coroutines.flow.first
 
-/**
- * Use case для записи на курс
- * 
- * Создаёт CourseProgress (если отсутствует), генерирует PracticeSchedule
- * на основе EnrollmentParams и сохраняет их в репозиторий
- */
 class EnrollCourseUseCase(
     private val coursesRepository: CoursesRepository,
     private val practicesRepository: PracticesRepository,
-    private val createScheduleForCourseUseCase: CreateScheduleForCourseUseCase
+    private val createScheduleForCourseUseCase: CreateScheduleForCourseUseCase,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase
 ) {
-    /**
-     * @param params Параметры записи на курс
-     * @return Результат с количеством созданных расписаний
-     */
-    suspend operator fun invoke(params: EnrollmentParams): AppResult<Int> {
-        return try {
-            val courseId: CourseId = params.courseId
-            
-            // Получаем информацию о курсе
-            val course = coursesRepository.getCourseById(courseId).first()
-                ?: return Err(AppError.NotFound)
-            
+    suspend operator fun invoke(params: EnrollmentParams): AppResult<Int> =
+        getCurrentUserIdUseCase().flatMap { userId ->
+            val courseId = params.courseId
+
             val courseItems = coursesRepository.getCourseItemsStream(courseId).first()
             
-            // Стартуем курс, если ещё не начат (создаёт CourseProgress)
-            val progress = coursesRepository.getCourseProgressStream(courseId).first()
-            if (progress == null || progress.percent == 0) {
-                coursesRepository.startCourse(courseId)
+            if (courseItems.isEmpty()) {
+                return Err(AppError.NotFound)
             }
             
-            // Генерируем расписания для практик курса
-            val schedules = createScheduleForCourseUseCase(
-                params = params,
-                courseItems = courseItems
-            )
+            val progress = coursesRepository.getCourseProgressStream(userId, courseId).first()
+            if (progress == null || progress.percent == 0) {
+                coursesRepository.startCourse(userId, courseId)
+            }
             
-            // Сохраняем расписания
+            val schedules = createScheduleForCourseUseCase(params = params, courseItems = courseItems)
+            
             schedules.forEach { schedule ->
                 practicesRepository.upsertSchedule(schedule)
             }
             
             Ok(schedules.size)
-        } catch (e: Exception) {
-            Err(AppError.Unknown)
         }
-    }
 }

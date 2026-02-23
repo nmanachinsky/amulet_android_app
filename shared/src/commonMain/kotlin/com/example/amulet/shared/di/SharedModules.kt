@@ -237,11 +237,11 @@ private val sharedModule = module {
     factory { CompleteCourseItemUseCase(get(), get()) }
     factory { ResetCourseProgressUseCase(get(), get()) }
     factory { SearchCoursesUseCase(get()) }
-    factory { CheckItemUnlockUseCase(get()) }
-    factory { GetUnlockedItemsUseCase(get(), get()) }
-    factory { GetNextCourseItemUseCase(get(), get()) }
+    factory { CheckItemUnlockUseCase(get(), get()) }
+    factory { GetUnlockedItemsUseCase(get(), get(), get()) }
+    factory { GetNextCourseItemUseCase(get(), get(), get()) }
     factory { CreateScheduleForCourseUseCase() }
-    factory { EnrollCourseUseCase(get(), get(), get()) }
+    factory { EnrollCourseUseCase(get(), get(), get(), get()) }
 
     // Complete practice session (нужен доступ к практикам и курсам для источника FromCourse)
     factory { CompletePracticeSessionUseCase(get(), get()) }

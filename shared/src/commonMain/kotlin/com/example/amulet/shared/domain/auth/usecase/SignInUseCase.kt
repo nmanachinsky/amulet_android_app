@@ -5,6 +5,7 @@ import com.example.amulet.shared.domain.auth.model.UserCredentials
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.user.repository.UserRepository
 import com.github.michaelbull.result.flatMap
+import com.github.michaelbull.result.map
 
 class SignInUseCase(
     private val authRepository: AuthRepository,
@@ -13,6 +14,5 @@ class SignInUseCase(
     suspend operator fun invoke(credentials: UserCredentials): AppResult<Unit> =
         authRepository
             .signIn(credentials)
-            .flatMap { userId -> userRepository.fetchProfile(userId) }
-            .flatMap { user -> authRepository.establishSession(user) }
+            .flatMap { userId -> userRepository.ensureProfileLoaded(userId) }
 }

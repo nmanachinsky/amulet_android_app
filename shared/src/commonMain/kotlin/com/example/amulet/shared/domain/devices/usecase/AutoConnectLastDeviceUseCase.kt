@@ -13,10 +13,12 @@ class AutoConnectLastDeviceUseCase(
     suspend operator fun invoke() {
         Logger.d("AutoConnect: start", tag = TAG)
         
-        val userId = getCurrentUserIdUseCase().component1() ?: run {
-            Logger.d("AutoConnect: no userId", tag = TAG)
+        val result = getCurrentUserIdUseCase()
+        if (!result.isOk) {
+            Logger.d("AutoConnect: no userId, result=$result", tag = TAG)
             return
         }
+        val userId = result.component1()!!
         
         val lastUsed = try {
             devicesRepository.getLastConnectedDevice(userId)

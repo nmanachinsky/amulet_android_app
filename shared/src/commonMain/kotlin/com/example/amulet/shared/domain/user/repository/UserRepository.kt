@@ -51,4 +51,10 @@ interface UserRepository {
      * Запускает процесс удаления аккаунта и связанных данных (right to erasure).
      */
     suspend fun requestAccountDeletion(userId: UserId): AppResult<Unit>
+
+    /**
+     * Создает гостевого пользователя в локальной БД.
+     * Используется при включении гостевого режима.
+     */
+    suspend fun createGuestUser(userId: UserId): AppResult<Unit>
 }

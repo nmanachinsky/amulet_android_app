@@ -164,6 +164,27 @@ class UserRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun createGuestUser(userId: UserId): AppResult<Unit> {
+        Logger.d("createGuestUser: userId=${userId.value}", TAG)
+        val entity = UserEntity(
+            id = userId.value,
+            displayName = null,
+            avatarUrl = null,
+            timezone = null,
+            language = null,
+            consents = null,
+            createdAt = null,
+            updatedAt = null
+        )
+        return localDataSource.upsert(entity).also { result ->
+            if (result.isOk) {
+                Logger.i("createGuestUser: success userId=${userId.value}", TAG)
+            } else {
+                Logger.e("createGuestUser: failed error=${result.error}", tag = TAG)
+            }
+        }
+    }
+
     private fun mapConsentsToJson(consents: UserConsents): JsonObject {
         return JsonObject(
             mapOf(

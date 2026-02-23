@@ -49,15 +49,15 @@ class UserRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun ensureProfileLoaded(userId: UserId): AppResult<Unit> {
-        Logger.d("ensureProfileLoaded: userId=${userId.value}", TAG)
+    override suspend fun preloadProfileToCache(userId: UserId): AppResult<Unit> {
+        Logger.d("preloadProfileToCache: userId=${userId.value}", TAG)
         return fetchAndCacheUser(userId.value).fold(
             success = {
-                Logger.i("ensureProfileLoaded: success userId=${userId.value}", TAG)
+                Logger.i("preloadProfileToCache: success userId=${userId.value}", TAG)
                 Ok(Unit)
             },
             failure = { error ->
-                Logger.e("ensureProfileLoaded: failed error=$error", tag = TAG)
+                Logger.e("preloadProfileToCache: failed error=$error", tag = TAG)
                 Err(error)
             }
         )

@@ -12,5 +12,5 @@ class SignInWithGoogleUseCase(
     suspend operator fun invoke(idToken: String, rawNonce: String?): AppResult<Unit> =
         authRepository
             .signInWithGoogle(idToken, rawNonce)
-            .flatMap { userId -> userRepository.ensureProfileLoaded(userId) }
+            .flatMap { userId -> userRepository.preloadProfileToCache(userId) }
 }

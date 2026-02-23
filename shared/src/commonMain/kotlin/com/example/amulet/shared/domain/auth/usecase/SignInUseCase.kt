@@ -14,5 +14,5 @@ class SignInUseCase(
     suspend operator fun invoke(credentials: UserCredentials): AppResult<Unit> =
         authRepository
             .signIn(credentials)
-            .flatMap { userId -> userRepository.ensureProfileLoaded(userId) }
+            .flatMap { userId -> userRepository.preloadProfileToCache(userId) }
 }

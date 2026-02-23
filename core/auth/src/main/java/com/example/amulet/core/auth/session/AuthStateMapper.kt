@@ -14,6 +14,7 @@ class AuthStateMapper {
             STATE_LOGGED_IN -> if (userId != null) AuthState.LoggedIn(UserId(userId)) else AuthState.LoggedOut
             STATE_GUEST -> if (userId != null) AuthState.Guest(UserId(userId)) else AuthState.LoggedOut
             STATE_LOGGED_OUT -> AuthState.LoggedOut
+            null -> AuthState.LoggedOut
             else -> AuthState.Loading
         }
     }

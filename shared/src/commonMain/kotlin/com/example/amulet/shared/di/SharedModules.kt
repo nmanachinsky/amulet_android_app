@@ -68,7 +68,7 @@ private val sharedModule = module {
     factory { SignInWithGoogleUseCase(get(), get()) }
     factory { SignOutUseCase(get()) }
     factory { SignUpUseCase(get(), get()) }
-    factory { EnableGuestModeUseCase(get()) }
+    factory { EnableGuestModeUseCase(get(), get()) }
     factory { ObserveCurrentUserIdUseCase(get()) }
     factory { GetCurrentUserIdUseCase(get()) }
     factory { ObserveAuthStateUseCase(get()) }

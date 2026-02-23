@@ -19,7 +19,7 @@ class GetPatternByIdUseCase(
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(id: PatternId): Flow<Pattern?> {
         return observeCurrentUserIdUseCase().flatMapLatest { userId ->
-            userId?.let { repository.getPatternById(id, it) }
+            userId?.let { repository.getPatternById(id) }
                 ?: flowOf(null)
         }
     }

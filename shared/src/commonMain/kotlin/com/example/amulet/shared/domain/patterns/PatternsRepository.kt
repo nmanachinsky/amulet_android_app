@@ -23,7 +23,7 @@ interface PatternsRepository {
         userId: UserId
     ): Flow<List<Pattern>>
     
-    fun getPatternById(id: PatternId, userId: UserId): Flow<Pattern?>
+    fun getPatternById(id: PatternId): Flow<Pattern?>
     
     fun getMyPatternsStream(userId: UserId): Flow<List<Pattern>>
     

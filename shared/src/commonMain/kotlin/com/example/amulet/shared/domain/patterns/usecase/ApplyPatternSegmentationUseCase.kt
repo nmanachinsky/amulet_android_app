@@ -26,7 +26,7 @@ class ApplyPatternSegmentationUseCase(
     ): AppResult<Unit> {
         val userId = getCurrentUserIdUseCase().getOrElse { return AppResult(it) }
         
-        val basePattern = repository.getPatternById(patternId, userId).firstOrNull()
+        val basePattern = repository.getPatternById(patternId).firstOrNull()
             ?: return Err(AppError.NotFound)
 
         return slicePatternIntoSegments(basePattern, markersMs).andThen { segments ->

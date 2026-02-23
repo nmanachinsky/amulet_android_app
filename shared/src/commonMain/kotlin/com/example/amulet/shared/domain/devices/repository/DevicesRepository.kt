@@ -9,6 +9,7 @@ import com.example.amulet.shared.domain.devices.model.ScannedAmulet
 import com.example.amulet.shared.domain.devices.model.DeviceAnimationPlan
 import com.example.amulet.shared.domain.devices.model.AmuletCommand
 import com.example.amulet.shared.domain.devices.model.NotificationType
+import com.example.amulet.shared.domain.user.model.UserId
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -23,7 +24,7 @@ interface DevicesRepository {
      * Наблюдать за списком всех добавленных устройств.
      * Источник истины - локальная БД.
      */
-    fun observeDevices(): Flow<List<Device>>
+    fun observeDevices(userId: UserId): Flow<List<Device>>
     
     /**
      * Получить устройство по ID.
@@ -33,17 +34,19 @@ interface DevicesRepository {
     /**
      * Получить последнее подключенное устройство текущего пользователя.
      */
-    suspend fun getLastConnectedDevice(): Device?
+    suspend fun getLastConnectedDevice(userId: UserId): Device?
     
     /**
      * Добавить новое устройство в локальную БД.
      * 
+     * @param userId ID пользователя
      * @param bleAddress BLE MAC адрес устройства
      * @param name Имя устройства
      * @param hardwareVersion Версия железа
      * @return Добавленное устройство
      */
     suspend fun addDevice(
+        userId: UserId,
         bleAddress: String,
         name: String,
         hardwareVersion: Int
@@ -97,10 +100,12 @@ interface DevicesRepository {
     /**
      * Подключиться к устройству по BLE адресу.
      * 
+     * @param userId ID пользователя
      * @param bleAddress MAC адрес устройства
      * @return Flow с состоянием подключения
      */
     fun connectToDevice(
+        userId: UserId,
         bleAddress: String
     ): Flow<BleConnectionState>
     

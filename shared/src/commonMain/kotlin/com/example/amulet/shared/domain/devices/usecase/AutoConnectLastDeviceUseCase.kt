@@ -1,19 +1,27 @@
 package com.example.amulet.shared.domain.devices.usecase
 
+import com.example.amulet.shared.core.logging.Logger
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.example.amulet.shared.domain.devices.model.BleConnectionState
 import com.example.amulet.shared.domain.devices.repository.DevicesRepository
 import kotlinx.coroutines.flow.first
-import com.example.amulet.shared.core.logging.Logger
 
 class AutoConnectLastDeviceUseCase(
-    private val devicesRepository: DevicesRepository
+    private val devicesRepository: DevicesRepository,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase
 ) {
     suspend operator fun invoke() {
         Logger.d("AutoConnect: start", tag = TAG)
+        
+        val userId = getCurrentUserIdUseCase().component1() ?: run {
+            Logger.d("AutoConnect: no userId", tag = TAG)
+            return
+        }
+        
         val lastUsed = try {
-            devicesRepository.getLastConnectedDevice()
+            devicesRepository.getLastConnectedDevice(userId)
         } catch (e: Exception) {
-            Logger.e("AutoConnect: failed to get last connected device: ${'$'}e", tag = TAG)
+            Logger.e("AutoConnect: failed to get last connected device: $e", tag = TAG)
             null
         }
 
@@ -22,25 +30,25 @@ class AutoConnectLastDeviceUseCase(
             return
         }
 
-        Logger.d("AutoConnect: last device id=${'$'}{lastUsed.id.value} ble=${'$'}{lastUsed.bleAddress}", tag = TAG)
+        Logger.d("AutoConnect: last device id=${lastUsed.id.value} ble=${lastUsed.bleAddress}", tag = TAG)
 
         try {
-            val flow = devicesRepository.connectToDevice(lastUsed.bleAddress)
+            val flow = devicesRepository.connectToDevice(userId, lastUsed.bleAddress)
             flow.first { state ->
                 when (state) {
                     is BleConnectionState.Connected -> {
-                        Logger.d("AutoConnect: connected to ${'$'}{lastUsed.bleAddress}", tag = TAG)
+                        Logger.d("AutoConnect: connected to ${lastUsed.bleAddress}", tag = TAG)
                         true
                     }
                     is BleConnectionState.Failed -> {
-                        Logger.e("AutoConnect: failed to connect to ${'$'}{lastUsed.bleAddress} error=${'$'}{state.error}", tag = TAG)
+                        Logger.e("AutoConnect: failed to connect to ${lastUsed.bleAddress} error=${state.error}", tag = TAG)
                         true
                     }
                     else -> false
                 }
             }
         } catch (e: Exception) {
-            Logger.e("AutoConnect: exception during connect to ${'$'}{lastUsed.bleAddress}: ${'$'}e", tag = TAG)
+            Logger.e("AutoConnect: exception during connect to ${lastUsed.bleAddress}: $e", tag = TAG)
         }
     }
 

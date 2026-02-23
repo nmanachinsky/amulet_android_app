@@ -17,7 +17,6 @@ import com.example.amulet.shared.domain.devices.repository.OtaRepository
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.andThen
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -34,8 +33,6 @@ class OtaRepositoryImpl @Inject constructor(
     private val devicesLocalDataSource: DevicesLocalDataSource,
     private val otaMapper: OtaMapper
 ) : OtaRepository {
-    
-    private var currentOtaJob: Job? = null
     
     override suspend fun checkFirmwareUpdate(deviceId: DeviceId): AppResult<FirmwareUpdate?> {
         // Получаем информацию об устройстве из БД
@@ -115,8 +112,6 @@ class OtaRepositoryImpl @Inject constructor(
     }
     
     override suspend fun cancelOtaUpdate(): AppResult<Unit> {
-        currentOtaJob?.cancel()
-        currentOtaJob = null
         return Ok(Unit)
     }
     

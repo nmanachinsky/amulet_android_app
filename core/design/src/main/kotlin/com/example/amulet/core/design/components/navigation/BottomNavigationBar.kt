@@ -25,7 +25,8 @@ import com.example.amulet.core.design.foundation.color.AmuletPalette
 data class BottomNavItem(
     val route: String,
     val icon: ImageVector,
-    val label: String
+    val label: String,
+    val enabled: Boolean = true
 )
 
 @Composable
@@ -69,33 +70,45 @@ private fun AmuletBottomNavItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isEnabled = item.enabled
     val animatedBackgroundColor by animateColorAsState(
-        targetValue = if (isSelected) AmuletPalette.Primary.copy(alpha = 0.15f) else Color.Transparent,
+        targetValue = when {
+            isSelected && isEnabled -> AmuletPalette.Primary.copy(alpha = 0.15f)
+            !isEnabled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            else -> Color.Transparent
+        },
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "bg"
     )
 
     val animatedContentColor by animateColorAsState(
-        targetValue = if (isSelected) AmuletPalette.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = when {
+            isSelected && isEnabled -> AmuletPalette.Primary
+            !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "content"
     )
 
     val animatedIconSize by animateDpAsState(
-        targetValue = if (isSelected) 24.dp else 22.dp,
+        targetValue = if (isSelected && isEnabled) 24.dp else 22.dp,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "size"
     )
+
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(animatedBackgroundColor)
             .selectable(
-                selected = isSelected,
-                onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
+                selected = isSelected && isEnabled,
+                onClick = { if (isEnabled) onClick() },
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = isEnabled
             )
             .padding(vertical = 6.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -6,21 +6,31 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.amulet.shared.domain.auth.model.AuthState
 import com.example.amulet.feature.dashboard.navigation.navigateToDashboard
 import com.example.amulet.feature.practices.navigation.navigateToPracticesHome
 import com.example.amulet.feature.hugs.navigation.navigateToHugs
 import com.example.amulet.feature.patterns.navigation.navigateToPatternsList
+import com.example.amulet_android_app.navigation.navigateToSettings
 import com.example.amulet_android_app.R
 import com.example.amulet.core.design.components.navigation.AmuletBottomNavigationBar
 import com.example.amulet.core.design.components.navigation.BottomNavItem
 import com.example.amulet.core.design.scaffold.LocalScaffoldState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Main Scaffold с упрощенным управлением через ScaffoldState.
@@ -40,6 +50,7 @@ import com.example.amulet.core.design.scaffold.LocalScaffoldState
 @Composable
 fun MainScaffold(
     navController: NavHostController,
+    authState: AuthState,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -58,7 +69,8 @@ fun MainScaffold(
                     {
                         AppBottomNavigationBar(
                             navController = navController,
-                            currentRoute = currentRoute.orEmpty()
+                            currentRoute = currentRoute.orEmpty(),
+                            isGuest = authState is AuthState.Guest
                         )
                     }
                 } else {
@@ -93,16 +105,44 @@ fun MainScaffold(
 @Composable
 private fun AppBottomNavigationBar(
     navController: NavHostController,
-    currentRoute: String
+    currentRoute: String,
+    isGuest: Boolean
 ) {
+    val scaffoldState = LocalScaffoldState.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(isGuest) {
+        if (isGuest) {
+            scaffoldState.updateConfig {
+                copy(snackbarHost = {
+                    SnackbarHost(hostState = snackbarHostState)
+                })
+            }
+        }
+    }
+
+    fun onHugsClick() {
+        if (isGuest) {
+            CoroutineScope(Dispatchers.Main).launch {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.guest_hugs_restricted),
+                    duration = SnackbarDuration.Short
+                )
+            }
+        } else {
+            navController.navigateToHugs(popUpToInclusive = true)
+        }
+    }
+
     AmuletBottomNavigationBar(
-        items = getBottomNavItems(),
+        items = getBottomNavItems(isGuest),
         selectedRoute = currentRoute,
         onItemSelected = { item ->
             when (item.route) {
                 "dashboard/main" -> navController.navigateToDashboard(popUpToInclusive = true)
                 "practices/home" -> navController.navigateToPracticesHome(popUpToInclusive = true)
-                "hugs/main" -> navController.navigateToHugs(popUpToInclusive = true)
+                "hugs/main" -> onHugsClick()
                 "patterns/list" -> navController.navigateToPatternsList()
                 "settings/main" -> navController.navigateToSettings()
             }
@@ -126,7 +166,7 @@ private fun shouldShowBottomBar(route: String): Boolean {
  * Получить список элементов bottom navigation
  */
 @Composable
-private fun getBottomNavItems() = listOf(
+private fun getBottomNavItems(isGuest: Boolean) = listOf(
     BottomNavItem(
         route = "dashboard/main",
         icon = Icons.Default.Dashboard,
@@ -140,7 +180,8 @@ private fun getBottomNavItems() = listOf(
     BottomNavItem(
         route = "hugs/main",
         icon = Icons.Default.EmojiPeople,
-        label = stringResource(R.string.bottom_nav_hugs)
+        label = stringResource(R.string.bottom_nav_hugs),
+        enabled = !isGuest
     ),
     BottomNavItem(
         route = "patterns/list",

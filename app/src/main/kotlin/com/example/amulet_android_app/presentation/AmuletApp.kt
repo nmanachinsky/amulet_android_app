@@ -41,7 +41,10 @@ fun AmuletApp(
                     }
                     is AuthState.LoggedIn -> key(state) {
                         val navController = rememberNavController()
-                        MainScaffold(navController = navController) {
+                        MainScaffold(
+                            navController = navController,
+                            authState = state
+                        ) {
                             AppNavHost(
                                 navController = navController,
                                 startDestination = DashboardGraphDestination
@@ -50,7 +53,10 @@ fun AmuletApp(
                     }
                     is AuthState.Guest -> key(state) {
                         val navController = rememberNavController()
-                        MainScaffold(navController = navController) {
+                        MainScaffold(
+                            navController = navController,
+                            authState = state
+                        ) {
                             AppNavHost(
                                 navController = navController,
                                 startDestination = DashboardGraphDestination

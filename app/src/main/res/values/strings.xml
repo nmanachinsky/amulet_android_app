@@ -8,6 +8,7 @@
     <string name="bottom_nav_hugs">Hugs</string>
     <string name="bottom_nav_patterns">Patterns</string>
     <string name="bottom_nav_settings">Settings</string>
+    <string name="guest_hugs_restricted">Please sign in to access Hugs</string>
     
     <!-- Placeholder Screens -->
     <string name="placeholder_library_title">Practice Library</string>

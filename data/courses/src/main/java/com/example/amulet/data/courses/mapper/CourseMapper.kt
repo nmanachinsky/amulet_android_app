@@ -18,23 +18,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.decodeFromString
 
-fun CourseEntity.toDomain(): Course = Course(
-    id = id,
-    title = title,
-    description = description,
-    goal = goal?.let { PracticeGoal.valueOf(it) },
-    level = level?.let { PracticeLevel.valueOf(it) },
-    rhythm = rhythm?.let { CourseRhythm.valueOf(it) } ?: CourseRhythm.DAILY,
-    tags = emptyList(),
-    totalDurationSec = totalDurationSec,
-    modulesCount = modulesCount,
-    recommendedDays = recommendedDays,
-    difficulty = difficulty,
-    coverUrl = coverUrl,
-    createdAt = createdAt,
-    updatedAt = updatedAt
-)
-
 fun CourseEntity.toDomain(json: Json): Course = Course(
     id = id,
     title = title,
@@ -68,15 +51,6 @@ fun CourseItemEntity.toDomain(): CourseItem = CourseItem(
     }
 )
 
-fun CourseProgressEntity.toDomain(): CourseProgress = CourseProgress(
-    courseId = courseId,
-    completedItemIds = emptySet(),
-    currentItemId = currentItemId,
-    percent = percent,
-    totalTimeSec = totalTimeSec,
-    updatedAt = updatedAt
-)
-
 fun CourseProgressEntity.toDomain(json: Json): CourseProgress = CourseProgress(
     courseId = courseId,
     completedItemIds = completedItemIdsJson.safeParseStringSet(json),
@@ -88,6 +62,12 @@ fun CourseProgressEntity.toDomain(json: Json): CourseProgress = CourseProgress(
 
 fun List<String>.toJsonArrayString(json: Json): String =
     json.encodeToString(JsonArray(this.map { JsonPrimitive(it) }))
+
+fun List<String>.toJsonArrayString(): String =
+    toJsonArrayString(Json)
+
+fun UnlockCondition.toJson(): String =
+    Json.encodeToString(this)
 
 private fun String?.safeParseStringList(json: Json): List<String> =
     runCatching {

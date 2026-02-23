@@ -114,10 +114,10 @@ private val sharedModule = module {
     factory { SyncPushTokenUseCase(get(), get()) }
 
     // Privacy UseCases
-    factory { GetUserConsentsUseCase(get()) }
-    factory { UpdateUserConsentsUseCase(get()) }
-    factory { RequestDataExportUseCase(get()) }
-    factory { RequestAccountDeletionUseCase(get()) }
+    factory { GetUserConsentsUseCase(get(), get()) }
+    factory { UpdateUserConsentsUseCase(get(), get()) }
+    factory { RequestDataExportUseCase(get(), get()) }
+    factory { RequestAccountDeletionUseCase(get(), get()) }
 
     // Devices UseCases (локальная работа без серверной привязки)
     factory { ObserveDevicesUseCase(get(), get()) }

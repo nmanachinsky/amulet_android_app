@@ -1,18 +1,20 @@
 package com.example.amulet.shared.domain.privacy.usecase
 
+import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.domain.privacy.PrivacyRepository
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.example.amulet.shared.domain.privacy.model.UserConsents
+import com.example.amulet.shared.domain.user.repository.UserRepository
 
 /**
  * Обновление согласий пользователя.
- *
- * Реальная синхронизация сессии (UserSessionContext) остаётся ответственностью
- * data-слоя/оркестраторов, здесь только делегирование в PrivacyRepository.
  */
 class UpdateUserConsentsUseCase(
-    private val privacyRepository: PrivacyRepository,
+    private val userRepository: UserRepository,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
 ) {
-    suspend operator fun invoke(consents: UserConsents): AppResult<Unit> =
-        privacyRepository.updateUserConsents(consents)
+    suspend operator fun invoke(consents: UserConsents): AppResult<Unit> {
+        val userId = getCurrentUserIdUseCase().component1() ?: return AppResult(AppError.Unauthorized)
+        return userRepository.updateUserConsents(userId, consents)
+    }
 }

@@ -1,6 +1,6 @@
 package com.example.amulet.core.supabase.auth
 
-import com.example.amulet.shared.core.auth.IdTokenProvider
+import com.example.amulet.core.supabase.auth.IdTokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 

@@ -5,12 +5,11 @@ import com.example.amulet.data.practices.mapper.toDomain
 import com.example.amulet.data.practices.mapper.toEntity
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.core.auth.UserSessionContext
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import com.example.amulet.shared.domain.practices.MoodRepository
 import com.example.amulet.shared.domain.practices.model.MoodEntry
 import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.MoodSource
+import com.example.amulet.shared.domain.user.model.UserId
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +36,7 @@ class MoodRepositoryImpl @Inject constructor(
         return try {
             val entry = MoodEntry(
                 id = java.util.UUID.randomUUID().toString(),
-                userId = com.example.amulet.shared.domain.user.model.UserId(currentUserId),
+                userId = UserId(currentUserId),
                 mood = mood,
                 source = source,
                 createdAt = System.currentTimeMillis(),

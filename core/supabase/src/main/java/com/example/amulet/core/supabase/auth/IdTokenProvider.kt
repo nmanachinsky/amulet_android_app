@@ -1,4 +1,4 @@
-package com.example.amulet.shared.core.auth
+package com.example.amulet.core.supabase.auth
 
 /**
  * Провайдер токена авторизации для HTTP-запросов.

@@ -1,6 +1,6 @@
 package com.example.amulet.core.network.interceptor
 
-import com.example.amulet.shared.core.auth.IdTokenProvider
+import com.example.amulet.core.supabase.auth.IdTokenProvider
 import com.example.amulet.core.turnstile.TurnstileTokenStore
 import okhttp3.OkHttpClient
 import okhttp3.Request

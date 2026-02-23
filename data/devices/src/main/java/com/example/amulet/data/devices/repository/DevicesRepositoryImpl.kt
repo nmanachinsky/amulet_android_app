@@ -8,7 +8,6 @@ import com.example.amulet.data.devices.mapper.toDeviceEntity
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.core.auth.UserSessionProvider
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.onFailure

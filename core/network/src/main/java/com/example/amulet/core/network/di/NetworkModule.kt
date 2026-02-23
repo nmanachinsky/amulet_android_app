@@ -1,6 +1,6 @@
 package com.example.amulet.core.network
 
-import com.example.amulet.shared.core.auth.IdTokenProvider
+import com.example.amulet.core.supabase.auth.IdTokenProvider
 import com.example.amulet.core.network.di.ApiBaseUrl
 import com.example.amulet.core.network.interceptor.AuthInterceptor
 import com.example.amulet.core.network.interceptor.CaptchaInterceptor

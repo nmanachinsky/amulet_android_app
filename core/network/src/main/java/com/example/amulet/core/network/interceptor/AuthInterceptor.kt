@@ -1,6 +1,6 @@
 package com.example.amulet.core.network.interceptor
 
-import com.example.amulet.shared.core.auth.IdTokenProvider
+import com.example.amulet.core.supabase.auth.IdTokenProvider
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response

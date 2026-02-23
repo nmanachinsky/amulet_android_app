@@ -1,5 +1,6 @@
 package com.example.amulet.data.auth.di
 
+import com.example.amulet.core.auth.UserSessionManager
 import com.example.amulet.data.auth.datasource.local.AuthLocalDataSource
 import com.example.amulet.data.auth.datasource.local.RoomAuthLocalDataSource
 import com.example.amulet.data.auth.datasource.remote.AuthRemoteDataSource

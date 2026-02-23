@@ -1,5 +1,6 @@
 package com.example.amulet.data.auth.repository
 
+import com.example.amulet.core.auth.UserSessionManager
 import com.example.amulet.data.auth.datasource.local.AuthLocalDataSource
 import com.example.amulet.data.auth.datasource.remote.AuthRemoteDataSource
 import com.example.amulet.shared.core.AppError
@@ -7,11 +8,11 @@ import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.auth.model.UserCredentials
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
-import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.model.UserId
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.flatMap
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,60 +20,107 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val remoteDataSource: AuthRemoteDataSource,
     private val localDataSource: AuthLocalDataSource,
-    private val userSessionUpdater: UserSessionUpdater
+    private val userSessionManager: UserSessionManager
 ) : AuthRepository {
 
-    override suspend fun signUp(credentials: UserCredentials): AppResult<UserId> =
-        remoteDataSource.signUp(credentials)
+    override suspend fun signUp(credentials: UserCredentials): AppResult<UserId> {
+        Logger.d("signUp: starting registration", TAG)
+        return remoteDataSource.signUp(credentials).also { result ->
+            when (result.isOk) {
+                true -> Logger.i("signUp: success userId=${result.value.value}", TAG)
+                false -> Logger.w("signUp: failed error=${result.error}", tag = TAG)
+            }
+        }
+    }
 
-    override suspend fun signIn(credentials: UserCredentials): AppResult<UserId> =
-        remoteDataSource.signIn(credentials)
+    override suspend fun signIn(credentials: UserCredentials): AppResult<UserId> {
+        Logger.d("signIn: starting authentication", TAG)
+        return remoteDataSource.signIn(credentials).also { result ->
+            when (result.isOk) {
+                true -> Logger.i("signIn: success userId=${result.value.value}", TAG)
+                false -> Logger.w("signIn: failed error=${result.error}", tag = TAG)
+            }
+        }
+    }
 
-    override suspend fun signInWithGoogle(idToken: String, rawNonce: String?): AppResult<UserId> =
-        remoteDataSource.signInWithGoogle(idToken, rawNonce)
+    override suspend fun signInWithGoogle(idToken: String, rawNonce: String?): AppResult<UserId> {
+        Logger.d("signInWithGoogle: starting Google authentication", TAG)
+        return remoteDataSource.signInWithGoogle(idToken, rawNonce).also { result ->
+            when (result.isOk) {
+                true -> Logger.i("signInWithGoogle: success userId=${result.value.value}", TAG)
+                false -> Logger.w("signInWithGoogle: failed error=${result.error}", tag = TAG)
+            }
+        }
+    }
 
-    override suspend fun signOut(): AppResult<Unit> =
-        remoteDataSource.signOut().flatMap {
+    override suspend fun signOut(): AppResult<Unit> {
+        Logger.d("signOut: starting logout", TAG)
+        return remoteDataSource.signOut().flatMap {
             runCatching {
-                userSessionUpdater.clearSession()
+                userSessionManager.setLoggedOut()
                 localDataSource.clearAll()
             }.fold(
                 onSuccess = {
-                    Logger.i("Repository signOut: local cleared", TAG)
+                    Logger.i("signOut: success", TAG)
                     Ok(Unit)
                 },
                 onFailure = { throwable ->
-                    Logger.w("Repository signOut: local clear failed", throwable, TAG)
-                    Err(AppError.Unknown)
+                    Logger.e("signOut: local clear failed", throwable, TAG)
+                    Err(AppError.DatabaseError)
                 }
             )
         }
+    }
 
-    override suspend fun establishSession(user: User): AppResult<Unit> = runCatching {
-        userSessionUpdater.updateSession(user)
-    }.fold(
-        onSuccess = {
-            Logger.i("Repository establishSession success userId=${user.id.value}", TAG)
-            Ok(Unit)
-        },
-        onFailure = { throwable ->
-            Logger.w("Repository establishSession failed", throwable, TAG)
-            Err(AppError.Unknown)
-        }
-    )
+    override suspend fun restoreSession(userId: UserId): AppResult<Unit> {
+        Logger.d("restoreSession: userId=${userId.value}", TAG)
+        return runCatching {
+            userSessionManager.setLoggedIn(userId)
+        }.fold(
+            onSuccess = {
+                Logger.i("restoreSession: success userId=${userId.value}", TAG)
+                Ok(Unit)
+            },
+            onFailure = { throwable ->
+                Logger.e("restoreSession: failed", throwable, TAG)
+                Err(AppError.DatabaseError)
+            }
+        )
+    }
 
-    override suspend fun enableGuestSession(displayName: String?, language: String?): AppResult<Unit> = runCatching {
-        userSessionUpdater.enableGuestMode(displayName, language)
-    }.fold(
-        onSuccess = {
-            Logger.i("Repository enableGuestSession success", TAG)
-            Ok(Unit)
-        },
-        onFailure = { throwable ->
-            Logger.w("Repository enableGuestSession failed", throwable, TAG)
-            Err(AppError.Unknown)
-        }
-    )
+    override suspend fun startGuestSession(): AppResult<Unit> {
+        Logger.d("startGuestSession", TAG)
+        return runCatching {
+            val guestId = UserId(UUID.randomUUID().toString())
+            userSessionManager.setGuest(guestId)
+        }.fold(
+            onSuccess = {
+                Logger.i("startGuestSession: success", TAG)
+                Ok(Unit)
+            },
+            onFailure = { throwable ->
+                Logger.e("startGuestSession: failed", throwable, TAG)
+                Err(AppError.DatabaseError)
+            }
+        )
+    }
+
+    override suspend fun clearSession(): AppResult<Unit> {
+        Logger.d("clearSession", TAG)
+        return runCatching {
+            userSessionManager.clear()
+            localDataSource.clearAll()
+        }.fold(
+            onSuccess = {
+                Logger.i("clearSession: success", TAG)
+                Ok(Unit)
+            },
+            onFailure = { throwable ->
+                Logger.e("clearSession: failed", throwable, TAG)
+                Err(AppError.DatabaseError)
+            }
+        )
+    }
 
     private companion object {
         const val TAG = "AuthRepositoryImpl"

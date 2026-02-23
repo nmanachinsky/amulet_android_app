@@ -72,7 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
         return remoteDataSource.signOut().flatMap {
             runCatching {
                 userSessionManager.setLoggedOut()
-                localDataSource.clearAll()
+                // localDataSource.clearAll() // TODO: раскомментировать если нужно удалять данные при выходе
             }.fold(
                 onSuccess = {
                     Logger.i("signOut: success", TAG)
@@ -123,7 +123,7 @@ class AuthRepositoryImpl @Inject constructor(
         Logger.d("clearSession", TAG)
         return runCatching {
             userSessionManager.clear()
-            localDataSource.clearAll()
+            // localDataSource.clearAll() // TODO: раскомментировать если нужно удалять данные
         }.fold(
             onSuccess = {
                 Logger.i("clearSession: success", TAG)

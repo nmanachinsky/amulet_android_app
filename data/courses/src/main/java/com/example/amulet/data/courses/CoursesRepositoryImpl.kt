@@ -17,6 +17,7 @@ import com.example.amulet.shared.domain.courses.model.CourseItemId
 import com.example.amulet.shared.domain.courses.model.CourseModule
 import com.example.amulet.shared.domain.courses.model.CourseProgress
 import com.example.amulet.shared.domain.practices.model.PracticeId
+import com.example.amulet.shared.domain.user.model.UserId
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.onFailure
@@ -31,15 +32,9 @@ import javax.inject.Singleton
 class CoursesRepositoryImpl @Inject constructor(
     private val local: LocalCoursesDataSource,
     private val remote: RemoteCoursesDataSource,
-    private val sessionProvider: UserSessionProvider,
     private val json: Json
 ) : CoursesRepository {
 
-    private val currentUserId: String
-        get() = when (val c = sessionProvider.currentContext) {
-            is UserSessionContext.LoggedIn -> c.userId.value
-            else -> throw IllegalStateException("User not authenticated")
-        }
 
     override fun getCoursesStream(): Flow<List<Course>> =
         local.observeCourses().map { it.map { e -> e.toDomain(json) } }
@@ -53,13 +48,11 @@ class CoursesRepositoryImpl @Inject constructor(
     override fun getCourseModulesStream(courseId: CourseId): Flow<List<CourseModule>> =
         local.observeCourseModules(courseId).map { list -> list.map { it.toDomain() } }
 
-    override fun getCourseProgressStream(courseId: CourseId): Flow<CourseProgress?> =
-        local.observeCourseProgress(currentUserId, courseId).map { it?.toDomain(json) }
+    override fun getCourseProgressStream(userId: UserId, courseId: CourseId): Flow<CourseProgress?> =
+        local.observeCourseProgress(userId.value, courseId).map { it?.toDomain(json) }
 
-    override fun getAllCoursesProgressStream(): Flow<List<CourseProgress>> =
-        // Эта реализация предполагает, что `local` может предоставить весь прогресс для пользователя.
-        // Мы используем observeAllProgress для получения списка всех прогрессов.
-        local.observeAllProgress(currentUserId).map { list -> list.map { it.toDomain(json) } }
+    override fun getAllCoursesProgressStream(userId: UserId): Flow<List<CourseProgress>> =
+        local.observeAllProgress(userId.value).map { list -> list.map { it.toDomain(json) } }
 
     override fun getCoursesByPracticeId(practiceId: PracticeId): Flow<List<Course>> =
         local.observeCoursesByPracticeId(practiceId).map { entities ->
@@ -117,11 +110,11 @@ class CoursesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun startCourse(courseId: CourseId): AppResult<CourseProgress> {
+    override suspend fun startCourse(userId: UserId, courseId: CourseId): AppResult<CourseProgress> {
         val items = local.observeCourseItems(courseId).first()
         val now = System.currentTimeMillis()
         val progress = com.example.amulet.core.database.entity.CourseProgressEntity(
-            userId = currentUserId,
+            userId = userId.value,
             courseId = courseId,
             completedItemIdsJson = emptyList<String>().toJsonArrayString(json),
             currentItemId = items.minByOrNull { it.order }?.id,
@@ -133,13 +126,13 @@ class CoursesRepositoryImpl @Inject constructor(
         return Ok(progress.toDomain(json))
     }
 
-    override suspend fun continueCourse(courseId: CourseId): AppResult<CourseItemId?> {
-        val p = local.observeCourseProgress(currentUserId, courseId).first()
+    override suspend fun continueCourse(userId: UserId, courseId: CourseId): AppResult<CourseItemId?> {
+        val p = local.observeCourseProgress(userId.value, courseId).first()
         return Ok(p?.currentItemId)
     }
 
-    override suspend fun completeItem(courseId: CourseId, itemId: CourseItemId): AppResult<CourseProgress> {
-        val progress = local.observeCourseProgress(currentUserId, courseId).first()
+    override suspend fun completeItem(userId: UserId, courseId: CourseId, itemId: CourseItemId): AppResult<CourseProgress> {
+        val progress = local.observeCourseProgress(userId.value, courseId).first()
             ?: return Err(AppError.NotFound)
         val items = local.observeCourseItems(courseId).first().sortedBy { it.order }
         val completedSet = progress.toDomain(json).completedItemIds.toMutableSet()
@@ -156,8 +149,8 @@ class CoursesRepositoryImpl @Inject constructor(
         return Ok(updated.toDomain(json))
     }
 
-    override suspend fun resetProgress(courseId: CourseId): AppResult<Unit> {
-        local.resetProgress(currentUserId, courseId)
+    override suspend fun resetProgress(userId: UserId, courseId: CourseId): AppResult<Unit> {
+        local.resetProgress(userId.value, courseId)
         return Ok(Unit)
     }
 }

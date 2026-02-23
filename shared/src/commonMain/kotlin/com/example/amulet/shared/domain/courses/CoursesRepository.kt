@@ -8,6 +8,7 @@ import com.example.amulet.shared.domain.courses.model.CourseItemId
 import com.example.amulet.shared.domain.courses.model.CourseModule
 import com.example.amulet.shared.domain.courses.model.CourseProgress
 import com.example.amulet.shared.domain.practices.model.PracticeId
+import com.example.amulet.shared.domain.user.model.UserId
 import kotlinx.coroutines.flow.Flow
 
 interface CoursesRepository {
@@ -19,9 +20,9 @@ interface CoursesRepository {
 
     fun getCourseModulesStream(courseId: CourseId): Flow<List<CourseModule>>
 
-    fun getCourseProgressStream(courseId: CourseId): Flow<CourseProgress?>
+    fun getCourseProgressStream(userId: UserId, courseId: CourseId): Flow<CourseProgress?>
 
-    fun getAllCoursesProgressStream(): Flow<List<CourseProgress>>
+    fun getAllCoursesProgressStream(userId: UserId): Flow<List<CourseProgress>>
 
     fun getCoursesByPracticeId(practiceId: PracticeId): Flow<List<Course>>
 
@@ -29,11 +30,11 @@ interface CoursesRepository {
 
     suspend fun seedLocalData(): AppResult<Unit>
 
-    suspend fun startCourse(courseId: CourseId): AppResult<CourseProgress>
+    suspend fun startCourse(userId: UserId, courseId: CourseId): AppResult<CourseProgress>
 
-    suspend fun continueCourse(courseId: CourseId): AppResult<CourseItemId?>
+    suspend fun continueCourse(userId: UserId, courseId: CourseId): AppResult<CourseItemId?>
 
-    suspend fun completeItem(courseId: CourseId, itemId: CourseItemId): AppResult<CourseProgress>
+    suspend fun completeItem(userId: UserId, courseId: CourseId, itemId: CourseItemId): AppResult<CourseProgress>
 
-    suspend fun resetProgress(courseId: CourseId): AppResult<Unit>
+    suspend fun resetProgress(userId: UserId, courseId: CourseId): AppResult<Unit>
 }

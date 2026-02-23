@@ -1,9 +1,8 @@
 package com.example.amulet.shared.di
 
 import com.example.amulet.shared.domain.auth.usecase.EnableGuestModeUseCase
-import com.example.amulet.shared.domain.auth.usecase.GetCurrentSessionUseCase
-import com.example.amulet.shared.domain.auth.usecase.HasActiveSessionUseCase
-import com.example.amulet.shared.domain.auth.usecase.ObserveAuthStateUseCase
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
+import com.example.amulet.shared.domain.auth.usecase.ObserveCurrentUserIdUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInWithGoogleUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
@@ -69,9 +68,8 @@ private val sharedModule = module {
     factory { SignOutUseCase(get()) }
     factory { SignUpUseCase(get(), get()) }
     factory { EnableGuestModeUseCase(get()) }
-    factory { ObserveAuthStateUseCase(get()) }
-    factory { GetCurrentSessionUseCase(get()) }
-    factory { HasActiveSessionUseCase(get()) }
+    factory { ObserveCurrentUserIdUseCase(get()) }
+    factory { GetCurrentUserIdUseCase(get()) }
     
     // Initialization UseCases
     factory { SeedLocalDataUseCase(get(), get(), get()) }
@@ -229,15 +227,15 @@ private val sharedModule = module {
     factory { GetCourseByIdUseCase(get()) }
     factory { GetCourseItemsStreamUseCase(get()) }
     factory { GetCourseModulesStreamUseCase(get()) }
-    factory { GetCourseProgressStreamUseCase(get()) }
-    factory { GetAllCoursesProgressStreamUseCase(get()) }
+    factory { GetCourseProgressStreamUseCase(get(), get()) }
+    factory { GetAllCoursesProgressStreamUseCase(get(), get()) }
     factory { GetCoursesByPracticeIdUseCase(get()) }
     factory { RefreshCoursesUseCase(get()) }
     factory { RefreshCoursesCatalogUseCase(get()) }
-    factory { StartCourseUseCase(get()) }
-    factory { ContinueCourseUseCase(get()) }
-    factory { CompleteCourseItemUseCase(get()) }
-    factory { ResetCourseProgressUseCase(get()) }
+    factory { StartCourseUseCase(get(), get()) }
+    factory { ContinueCourseUseCase(get(), get()) }
+    factory { CompleteCourseItemUseCase(get(), get()) }
+    factory { ResetCourseProgressUseCase(get(), get()) }
     factory { SearchCoursesUseCase(get()) }
     factory { CheckItemUnlockUseCase(get()) }
     factory { GetUnlockedItemsUseCase(get(), get()) }

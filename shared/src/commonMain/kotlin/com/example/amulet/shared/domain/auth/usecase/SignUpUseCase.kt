@@ -13,5 +13,7 @@ class SignUpUseCase(
     suspend operator fun invoke(credentials: UserCredentials): AppResult<Unit> =
         authRepository
             .signUp(credentials)
-            .flatMap { userId -> userRepository.ensureProfileLoaded(userId) }
+            .flatMap { userId -> userRepository.fetchProfile(userId) }
+            .map { Unit }
+
 }

@@ -1,5 +1,6 @@
 package com.example.amulet.shared.domain.user.usecase
 
+import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
@@ -12,11 +13,11 @@ import kotlinx.coroutines.flow.flowOf
  */
 class ObserveCurrentUserUseCase(
     private val userRepository: UserRepository,
-    private val sessionProvider: UserSessionProvider
+    private val authRepository: AuthRepository
 ) {
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<User?> {
-        return sessionProvider.sessionContext
+        return authRepository.authState
             .flatMapLatest { context ->
                 when (context) {
                     is UserSessionContext.LoggedIn -> {

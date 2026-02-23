@@ -83,7 +83,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override fun getPatternById(id: PatternId, userId: UserId): Flow<Pattern?> {
+    override fun getPatternById(id: PatternId): Flow<Pattern?> {
         return localDataSource.observeById(id.value).map { entity ->
             entity?.let {
                 val tags = localDataSource.getTagsForPattern(it.id).toTagNames()

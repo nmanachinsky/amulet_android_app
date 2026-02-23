@@ -21,6 +21,7 @@ import com.example.amulet.shared.domain.devices.model.AmuletCommand
 import com.example.amulet.shared.domain.devices.model.NotificationType
 import com.example.amulet.shared.domain.devices.model.DeviceAnimationPlan
 import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.user.model.UserId
 import com.example.amulet.core.ble.model.AnimationPlan
 import com.example.amulet.core.ble.model.UploadState
 import kotlinx.coroutines.flow.Flow
@@ -39,22 +40,11 @@ import javax.inject.Singleton
 class DevicesRepositoryImpl @Inject constructor(
     private val localDataSource: DevicesLocalDataSource,
     private val bleDataSource: DevicesBleDataSource,
-    private val sessionProvider: UserSessionProvider,
     private val bleMapper: BleMapper
 ) : DevicesRepository {
     
-    private val currentUserId: String
-        get() {
-            val context = sessionProvider.currentContext
-            return when (context) {
-                is com.example.amulet.shared.core.auth.UserSessionContext.LoggedIn -> context.userId.value
-                is com.example.amulet.shared.core.auth.UserSessionContext.Guest -> context.sessionId
-                else -> throw IllegalStateException("User not authenticated")
-            }
-        }
-    
-    override fun observeDevices(): Flow<List<Device>> {
-        return localDataSource.observeDevicesByOwner(currentUserId)
+    override fun observeDevices(userId: UserId): Flow<List<Device>> {
+        return localDataSource.observeDevicesByOwner(userId.value)
             .map { entities -> entities.map { it.toDevice() } }
     }
     
@@ -68,29 +58,29 @@ class DevicesRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun getLastConnectedDevice(): Device? {
+    override suspend fun getLastConnectedDevice(userId: UserId): Device? {
         return try {
-            localDataSource.getLastConnectedDeviceByOwner(currentUserId)?.toDevice()
+            localDataSource.getLastConnectedDeviceByOwner(userId.value)?.toDevice()
         } catch (e: Exception) {
             null
         }
     }
     
     override suspend fun addDevice(
+        userId: UserId,
         bleAddress: String,
         name: String,
         hardwareVersion: Int
     ): AppResult<Device> {
         return try {
-            // Проверяем, не добавлено ли уже для текущего пользователя
-            val existing = localDataSource.getDeviceByBleAddress(bleAddress, currentUserId)
+            val existing = localDataSource.getDeviceByBleAddress(bleAddress, userId.value)
             if (existing != null) {
                 return Err(AppError.Validation(mapOf("bleAddress" to "Device already added")))
             }
             
             val device = Device(
                 id = DeviceId(UUID.randomUUID().toString()),
-                ownerId = currentUserId,
+                ownerId = userId.value,
                 bleAddress = bleAddress,
                 hardwareVersion = hardwareVersion,
                 firmwareVersion = "unknown",
@@ -190,20 +180,20 @@ class DevicesRepositoryImpl @Inject constructor(
         }
     }
     
-    override fun connectToDevice(bleAddress: String): Flow<BleConnectionState> {
+    override fun connectToDevice(userId: UserId, bleAddress: String): Flow<BleConnectionState> {
         return kotlinx.coroutines.flow.flow {
-            Logger.d("connectToDevice: start for ${'$'}bleAddress", tag = TAG)
+            Logger.d("connectToDevice: start for $bleAddress", tag = TAG)
             emit(BleConnectionState.Connecting)
             
             val result = bleDataSource.connect(bleAddress)
             val error = result.component2()
             if (error != null) {
-                Logger.e("connectToDevice: connect failed for ${'$'}bleAddress with error=${'$'}error", tag = TAG)
+                Logger.e("connectToDevice: connect failed for $bleAddress with error=$error", tag = TAG)
                 emit(BleConnectionState.Failed(error))
                 return@flow
             }
             try {
-                val entity = localDataSource.getDeviceByBleAddress(bleAddress, currentUserId)
+                val entity = localDataSource.getDeviceByBleAddress(bleAddress, userId.value)
                 if (entity != null) {
                     val updated = entity.copy(
                         status = com.example.amulet.core.database.entity.DeviceStatus.ONLINE,
@@ -212,9 +202,9 @@ class DevicesRepositoryImpl @Inject constructor(
                     localDataSource.upsertDevice(updated)
                 }
             } catch (e: Exception) {
-                Logger.e("connectToDevice: failed to update lastConnectedAt for ${'$'}bleAddress: ${'$'}e", tag = TAG)
+                Logger.e("connectToDevice: failed to update lastConnectedAt for $bleAddress: $e", tag = TAG)
             }
-            Logger.d("connectToDevice: connect succeeded for ${'$'}bleAddress", tag = TAG)
+            Logger.d("connectToDevice: connect succeeded for $bleAddress", tag = TAG)
             emit(BleConnectionState.Connected)
         }
     }

@@ -120,12 +120,12 @@ private val sharedModule = module {
     factory { RequestAccountDeletionUseCase(get()) }
 
     // Devices UseCases (локальная работа без серверной привязки)
-    factory { ObserveDevicesUseCase(get()) }
+    factory { ObserveDevicesUseCase(get(), get()) }
     factory { GetDeviceUseCase(get()) }
-    factory { AddDeviceUseCase(get()) }
+    factory { AddDeviceUseCase(get(), get()) }
     factory { RemoveDeviceUseCase(get()) }
     factory { ScanForDevicesUseCase(get()) }
-    factory { ConnectToDeviceUseCase(get()) }
+    factory { ConnectToDeviceUseCase(get(), get()) }
     factory { DisconnectFromDeviceUseCase(get()) }
     factory { ObserveConnectionStateUseCase(get()) }
     factory { ObserveConnectedDeviceStatusUseCase(get()) }
@@ -133,7 +133,7 @@ private val sharedModule = module {
     factory { UpdateDeviceSettingsUseCase(get()) }
     factory { ApplyDeviceBrightnessUseCase(get()) }
     factory { ApplyDeviceHapticsUseCase(get()) }
-    factory { AutoConnectLastDeviceUseCase(get()) }
+    factory { AutoConnectLastDeviceUseCase(get(), get()) }
 
     // OTA UseCases
     factory { CheckFirmwareUpdateUseCase(get()) }

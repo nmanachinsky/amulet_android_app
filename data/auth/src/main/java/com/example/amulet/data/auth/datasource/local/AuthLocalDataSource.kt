@@ -1,13 +1,7 @@
 package com.example.amulet.data.auth.datasource.local
 
-/**
- * Локальный источник данных для операций авторизации.
- * Отвечает за очистку пользовательских данных при выходе из аккаунта.
- */
-interface AuthLocalDataSource {
+import com.example.amulet.shared.core.AppResult
 
-    /**
-     * Полностью очищает локальное хранилище данных пользователя.
-     */
-    suspend fun clearAll()
+interface AuthLocalDataSource {
+    suspend fun clearAll(): AppResult<Unit>
 }

@@ -5,6 +5,7 @@ import com.example.amulet.data.user.datasource.local.UserLocalDataSource
 import com.example.amulet.data.user.datasource.local.UserLocalDataSourceImpl
 import com.example.amulet.data.user.datasource.remote.UserRemoteDataSource
 import com.example.amulet.data.user.datasource.remote.UserRemoteDataSourceImpl
+import com.example.amulet.data.user.mapper.UserMapper
 import com.example.amulet.shared.domain.user.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -27,4 +28,8 @@ interface UserDataModule {
     @Binds
     @Singleton
     fun bindUserLocalDataSource(impl: UserLocalDataSourceImpl): UserLocalDataSource
+
+    @Binds
+    @Singleton
+    fun bindUserMapper(impl: UserMapper): UserMapper
 }

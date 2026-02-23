@@ -12,16 +12,16 @@ import kotlin.time.Instant
 
 @Singleton
 @OptIn(ExperimentalTime::class)
-class UserDtoMapper @Inject constructor() {
+class UserMapper @Inject constructor() {
 
-    fun toDomain(dto: UserDto): User = User(
+    fun toDomainFromDto(dto: UserDto): User = User(
         id = UserId(dto.id),
         displayName = dto.displayName,
         avatarUrl = dto.avatarUrl,
         email = null,
         timezone = dto.timezone,
         language = dto.language,
-        consents = dto.toConsents(),
+        consents = mapConsents(dto.consents),
         createdAt = dto.createdAt?.value?.let { Instant.fromEpochMilliseconds(it) },
         updatedAt = dto.updatedAt?.value?.let { Instant.fromEpochMilliseconds(it) }
     )
@@ -32,21 +32,35 @@ class UserDtoMapper @Inject constructor() {
         avatarUrl = dto.avatarUrl,
         timezone = dto.timezone,
         language = dto.language,
-        consents = dto.toConsents(),
+        consents = mapConsents(dto.consents),
         createdAt = dto.createdAt?.value?.let { Instant.fromEpochMilliseconds(it) },
         updatedAt = dto.updatedAt?.value?.let { Instant.fromEpochMilliseconds(it) }
     )
 
-    private fun UserDto.toConsents(): UserConsents? = consents?.toUserConsents()
+    fun toDomain(entity: UserEntity): User = User(
+        id = UserId(entity.id),
+        displayName = entity.displayName,
+        avatarUrl = entity.avatarUrl,
+        timezone = entity.timezone,
+        language = entity.language,
+        consents = entity.consents,
+        createdAt = entity.createdAt,
+        updatedAt = entity.updatedAt
+    )
 
-    private fun Map<String, Any?>.toUserConsents(): UserConsents {
-        val analytics = (this["analytics"] as? Boolean) ?: false
-        val marketing = (this["marketing"] as? Boolean) ?: false
-        val notifications = (this["notifications"] as? Boolean) ?: false
-        val updatedAtString = this["updatedAt"] as? String
-        val updatedAt = updatedAtString?.let { Instant.parse(it) }
+    fun mergeAvatarUrl(dto: UserDto, existingEntity: UserEntity?): String? {
+        val dtoAvatar = dto.avatarUrl
+        return dtoAvatar ?: existingEntity?.avatarUrl
+    }
 
-        return UserConsents(
+    private fun mapConsents(consents: Map<String, Any?>?): UserConsents? = consents?.let {
+        val analytics = (it["analytics"] as? Boolean) ?: false
+        val marketing = (it["marketing"] as? Boolean) ?: false
+        val notifications = (it["notifications"] as? Boolean) ?: false
+        val updatedAtString = it["updatedAt"] as? String
+        val updatedAt = updatedAtString?.let { instant -> Instant.parse(instant) }
+
+        UserConsents(
             analytics = analytics,
             marketing = marketing,
             notifications = notifications,

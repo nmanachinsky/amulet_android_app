@@ -32,6 +32,22 @@ class RoomAuthLocalDataSource @Inject constructor(
         }
     )
 
+    override suspend fun deleteByUserId(userId: String): AppResult<Unit> = runCatching {
+        withContext(Dispatchers.IO) {
+            Logger.d("deleteByUserId: starting for userId=$userId", TAG)
+            database.userDao().deleteById(userId)
+        }
+    }.fold(
+        onSuccess = {
+            Logger.i("deleteByUserId: success for userId=$userId", TAG)
+            Ok(Unit)
+        },
+        onFailure = { throwable ->
+            Logger.e("deleteByUserId: failed for userId=$userId", throwable, TAG)
+            Err(AppError.DatabaseError)
+        }
+    )
+
     private companion object {
         const val TAG = "RoomAuthLocalDataSource"
     }

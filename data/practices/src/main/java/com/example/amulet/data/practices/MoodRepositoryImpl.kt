@@ -20,23 +20,17 @@ import javax.inject.Singleton
 @Singleton
 class MoodRepositoryImpl @Inject constructor(
     private val local: LocalPracticesDataSource,
-    private val sessionProvider: UserSessionProvider,
 ) : MoodRepository {
 
-    private val currentUserId: String
-        get() = when (val c = sessionProvider.currentContext) {
-            is UserSessionContext.LoggedIn -> c.userId.value
-            else -> throw IllegalStateException("User not authenticated")
-        }
-
     override suspend fun logMood(
+        userId: UserId,
         mood: MoodKind,
         source: MoodSource,
     ): AppResult<Unit> {
         return try {
             val entry = MoodEntry(
                 id = java.util.UUID.randomUUID().toString(),
-                userId = UserId(currentUserId),
+                userId = userId,
                 mood = mood,
                 source = source,
                 createdAt = System.currentTimeMillis(),
@@ -48,8 +42,8 @@ class MoodRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getMoodHistoryStream(): Flow<List<MoodEntry>> =
-        local.observeMoodEntries(currentUserId).map { list ->
+    override fun getMoodHistoryStream(userId: UserId): Flow<List<MoodEntry>> =
+        local.observeMoodEntries(userId.value).map { list ->
             list.mapNotNull { it.toDomain() }
         }
 }

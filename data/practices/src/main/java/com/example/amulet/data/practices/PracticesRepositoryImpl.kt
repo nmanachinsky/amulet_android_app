@@ -28,6 +28,7 @@ import com.example.amulet.shared.domain.practices.model.PracticeTag
 import com.example.amulet.shared.domain.practices.model.ScheduledSession
 import com.example.amulet.shared.domain.practices.model.PracticeSessionSource
 import com.example.amulet.shared.domain.practices.model.toStorageString
+import com.example.amulet.shared.domain.user.model.UserId
 import com.example.amulet.shared.domain.user.model.UserPreferences
 import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.PracticeAudioMode
@@ -37,6 +38,7 @@ import com.github.michaelbull.result.onFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -50,17 +52,10 @@ import javax.inject.Singleton
 class PracticesRepositoryImpl @Inject constructor(
     private val local: LocalPracticesDataSource,
     private val remote: RemotePracticesDataSource,
-    private val sessionProvider: UserSessionProvider,
     private val json: Json
 ) : PracticesRepository {
 
-    private val currentUserId: String
-        get() = when (val c = sessionProvider.currentContext) {
-            is UserSessionContext.LoggedIn -> c.userId.value
-            else -> throw IllegalStateException("User not authenticated")
-        }
-
-    override fun getPracticesStream(filter: PracticeFilter): Flow<List<Practice>> {
+    override fun getPracticesStream(userId: UserId, filter: PracticeFilter): Flow<List<Practice>> {
         val base = local.observePractices().map { it.map { e -> e.toDomain() } }
         val filtered = base.map { list ->
             val from = filter.durationFromSec
@@ -74,30 +69,30 @@ class PracticesRepositoryImpl @Inject constructor(
             }
         }
         return if (filter.onlyFavorites) {
-            combine(filtered, local.observeFavoriteIds(currentUserId)) { practices, favIds ->
+            combine(filtered, local.observeFavoriteIds(userId.value)) { practices, favIds ->
                 practices.filter { it.id in favIds }
             }
         } else filtered
     }
 
-    override fun getPracticeById(id: PracticeId): Flow<Practice?> =
+    override fun getPracticeById(userId: UserId, id: PracticeId): Flow<Practice?> =
         local.observePracticeByIdWithFavorites(id).map { relation ->
             relation?.practice?.toDomain()?.copy(
-                isFavorite = relation.favorites.any { it.userId == currentUserId }
+                isFavorite = relation.favorites.any { it.userId == userId.value }
             )
         }
 
     override fun getCategoriesStream(): Flow<List<PracticeCategory>> =
         local.observeCategories().map { it.map { c -> c.toDomain() } }
 
-    override fun getFavoritesStream(): Flow<List<Practice>> =
-        combine(local.observePractices(), local.observeFavoriteIds(currentUserId)) { entities, favIds ->
+    override fun getFavoritesStream(userId: UserId): Flow<List<Practice>> =
+        combine(local.observePractices(), local.observeFavoriteIds(userId.value)) { entities, favIds ->
             entities.filter { it.id in favIds }.map { it.toDomain() }
         }
 
-    override fun getRecommendationsStream(limit: Int?, contextGoal: PracticeGoal?): Flow<List<Practice>> {
-        val prefs = getUserPreferencesStream()
-        val recent = local.observeSessionsForUser(currentUserId)
+    override fun getRecommendationsStream(userId: UserId, limit: Int?, contextGoal: PracticeGoal?): Flow<List<Practice>> {
+        val prefs = getUserPreferencesStream(userId)
+        val recent = local.observeSessionsForUser(userId.value)
         val all = local.observePractices()
         return combine(all, prefs, recent) { practices, preferences, sessions ->
             val completedIds = sessions.filter { it.completed }.map { it.practiceId }.toSet()
@@ -118,8 +113,8 @@ class PracticesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun search(query: String, filter: PracticeFilter): AppResult<List<Practice>> {
-        val list = getPracticesStream(filter).first()
+    override suspend fun search(userId: UserId, query: String, filter: PracticeFilter): AppResult<List<Practice>> {
+        val list = getPracticesStream(userId, filter).first()
         return Ok(list.filter { it.title.contains(query, true) || (it.description?.contains(query, true) == true) })
     }
 
@@ -194,28 +189,25 @@ class PracticesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun setFavorite(practiceId: PracticeId, favorite: Boolean): AppResult<Unit> {
-        local.setFavorite(currentUserId, practiceId, favorite)
+    override suspend fun setFavorite(userId: UserId, practiceId: PracticeId, favorite: Boolean): AppResult<Unit> {
+        local.setFavorite(userId.value, practiceId, favorite)
         return Ok(Unit)
     }
 
-    override fun getActiveSessionStream(): Flow<PracticeSession?> {
-        val ctx = sessionProvider.currentContext
-        val userId = (ctx as? UserSessionContext.LoggedIn)?.userId?.value
-            ?: return flowOf(null)
-
-        return local.observeSessionsForUser(userId).map { list ->
+    override fun getActiveSessionStream(userId: UserId): Flow<PracticeSession?> {
+        return local.observeSessionsForUser(userId.value).map { list ->
             list.firstOrNull { it.status == PracticeSessionStatus.ACTIVE.name }?.toDomain()
         }
     }
 
-    override fun getSessionsHistoryStream(limit: Int?): Flow<List<PracticeSession>> =
-        local.observeSessionsForUser(currentUserId).map { list ->
+    override fun getSessionsHistoryStream(userId: UserId, limit: Int?): Flow<List<PracticeSession>> =
+        local.observeSessionsForUser(userId.value).map { list ->
             val mapped = list.map { it.toDomain() }
             if (limit != null) mapped.take(limit) else mapped
         }
 
     override suspend fun startPractice(
+        userId: UserId,
         practiceId: PracticeId,
         intensity: Double?,
         brightness: Double?,
@@ -226,7 +218,7 @@ class PracticesRepositoryImpl @Inject constructor(
         val now = System.currentTimeMillis()
         val session = com.example.amulet.core.database.entity.PracticeSessionEntity(
             id = java.util.UUID.randomUUID().toString(),
-            userId = currentUserId,
+            userId = userId.value,
             practiceId = practiceId,
             deviceId = null,
             status = PracticeSessionStatus.ACTIVE.name,
@@ -291,12 +283,13 @@ class PracticesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun skipScheduledSession(
+        userId: UserId,
         session: ScheduledSession
     ): AppResult<Unit> {
         val source = PracticeSessionSource.ScheduleSkip(session.id).toStorageString()
         val entity = com.example.amulet.core.database.entity.PracticeSessionEntity(
             id = java.util.UUID.randomUUID().toString(),
-            userId = currentUserId,
+            userId = userId.value,
             practiceId = session.practiceId,
             deviceId = null,
             status = PracticeSessionStatus.CANCELLED.name,
@@ -319,25 +312,26 @@ class PracticesRepositoryImpl @Inject constructor(
         return Ok(Unit)
     }
 
-    override fun getUserPreferencesStream(): Flow<UserPreferences> =
-        local.observePreferences(currentUserId).map { e ->
+    override fun getUserPreferencesStream(userId: UserId): Flow<UserPreferences> =
+        local.observePreferences(userId.value).map { e ->
             e.toDomain(json)
         }
 
-    override fun getSchedulesStream(): Flow<List<PracticeSchedule>> =
-        local.observeSchedules(currentUserId).map { list ->
+    override fun getSchedulesStream(userId: UserId): Flow<List<PracticeSchedule>> =
+        local.observeSchedules(userId.value).map { list ->
             list.map { e -> e.toDomain(json) }
         }
     
-    override fun getScheduleByPracticeId(practiceId: PracticeId): Flow<PracticeSchedule?> =
-        local.observeScheduleByPracticeId(currentUserId, practiceId).map { entity ->
+    override fun getScheduleByPracticeId(userId: UserId, practiceId: PracticeId): Flow<PracticeSchedule?> =
+        local.observeScheduleByPracticeId(userId.value, practiceId).map { entity ->
             entity?.toDomain(json)
         }
 
     override suspend fun upsertSchedule(
+        userId: UserId,
         schedule: com.example.amulet.shared.domain.practices.model.PracticeSchedule
     ): AppResult<Unit> {
-        val entity = schedule.toEntity(currentUserId, json)
+        val entity = schedule.toEntity(userId.value, json)
         local.upsertSchedule(entity)
         return Ok(Unit)
     }
@@ -349,18 +343,18 @@ class PracticesRepositoryImpl @Inject constructor(
         return Ok(Unit)
     }
 
-    override suspend fun updateUserPreferences(preferences: UserPreferences): AppResult<Unit> {
-        val entity = preferences.toEntity(currentUserId, json)
+    override suspend fun updateUserPreferences(userId: UserId, preferences: UserPreferences): AppResult<Unit> {
+        val entity = preferences.toEntity(userId.value, json)
         local.upsertPreferences(entity)
         return Ok(Unit)
     }
 
     // region Plans
 
-    override fun getPlansStream(): Flow<List<PracticePlan>> =
-        local.observePlans(currentUserId).map { list -> list.map { it.toExtrasDomain() as PracticePlan } }
+    override fun getPlansStream(userId: UserId): Flow<List<PracticePlan>> =
+        local.observePlans(userId.value).map { list -> list.map { it.toExtrasDomain() as PracticePlan } }
 
-    override fun getPlanById(id: String): Flow<PracticePlan?> =
+    override fun getPlanById(userId: UserId, id: String): Flow<PracticePlan?> =
         local.observePlanById(id).map { it?.toExtrasDomain() as PracticePlan }
 
     override fun getSchedulesByPlanStream(planId: String): Flow<List<PracticeSchedule>> =
@@ -381,10 +375,10 @@ class PracticesRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun upsertPlan(plan: PracticePlan): AppResult<Unit> {
+    override suspend fun upsertPlan(userId: UserId, plan: PracticePlan): AppResult<Unit> {
         val entity = com.example.amulet.core.database.entity.PlanEntity(
             id = plan.id,
-            userId = currentUserId,
+            userId = userId.value,
             title = plan.title,
             description = plan.description,
             status = plan.status,
@@ -405,11 +399,11 @@ class PracticesRepositoryImpl @Inject constructor(
 
     // region Statistics & badges
 
-    override fun getStatisticsStream(): Flow<PracticeStatistics?> =
-        local.observeUserPracticeStats(currentUserId).map { it?.toExtrasDomain() as PracticeStatistics }
+    override fun getStatisticsStream(userId: UserId): Flow<PracticeStatistics?> =
+        local.observeUserPracticeStats(userId.value).map { it?.toExtrasDomain() as PracticeStatistics }
 
-    override fun getBadgesStream(): Flow<List<PracticeBadge>> =
-        local.observeBadges(currentUserId).map { list -> list.map { it.toExtrasDomain() as PracticeBadge } }
+    override fun getBadgesStream(userId: UserId): Flow<List<PracticeBadge>> =
+        local.observeBadges(userId.value).map { list -> list.map { it.toExtrasDomain() as PracticeBadge } }
 
     // endregion
 

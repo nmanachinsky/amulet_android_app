@@ -6,6 +6,7 @@ import com.example.amulet.shared.domain.courses.usecase.CompleteCourseItemUseCas
 import com.example.amulet.shared.domain.practices.PracticesRepository
 import com.example.amulet.shared.domain.practices.model.PracticeSession
 import com.example.amulet.shared.domain.practices.model.PracticeSessionSource
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.map
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,6 +20,7 @@ import kotlinx.coroutines.withContext
 class CompletePracticeSessionUseCase(
     private val repository: PracticesRepository,
     private val completeCourseItemUseCase: CompleteCourseItemUseCase,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
@@ -26,18 +28,21 @@ class CompletePracticeSessionUseCase(
         rating: Int?,
         note: String?,
     ): AppResult<Unit> = withContext(dispatcher) {
-        val session = repository.getActiveSessionStream().firstOrNull()
+        val userIdResult = getCurrentUserIdUseCase()
+        if (userIdResult.isErr) {
+            return@withContext Err(userIdResult.error)
+        }
+        val userId = if(userIdResult.isOk) userIdResult.value else return@withContext Err(AppError.Unauthorized)
+
+        val session = repository.getActiveSessionStream(userId).firstOrNull()
             ?: return@withContext Err(AppError.NotFound)
 
-        // Помечаем сессию завершённой
         val stopped = repository.stopSession(session.id, completed = true)
         val completedSession = stopped.component1()
             ?: return@withContext stopped.map { }
 
-        // Доменные побочные эффекты в зависимости от источника сессии
         onSessionCompleted(completedSession)
 
-        // Логируем фидбек пользователя
         repository.updateSessionFeedback(
             sessionId = session.id,
             rating = rating,

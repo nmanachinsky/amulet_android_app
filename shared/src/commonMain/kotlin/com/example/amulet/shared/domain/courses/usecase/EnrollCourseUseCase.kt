@@ -36,7 +36,7 @@ class EnrollCourseUseCase(
             val schedules = createScheduleForCourseUseCase(params = params, courseItems = courseItems)
             
             schedules.forEach { schedule ->
-                practicesRepository.upsertSchedule(schedule)
+                practicesRepository.upsertSchedule(userId, schedule)
             }
             
             Ok(schedules.size)

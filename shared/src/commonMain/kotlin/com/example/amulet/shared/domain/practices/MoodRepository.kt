@@ -4,6 +4,7 @@ import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.domain.practices.model.MoodEntry
 import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.MoodSource
+import com.example.amulet.shared.domain.user.model.UserId
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -15,6 +16,7 @@ interface MoodRepository {
      * Логирует событие о настроении пользователя.
      */
     suspend fun logMood(
+        userId: UserId,
         mood: MoodKind,
         source: MoodSource,
     ): AppResult<Unit>
@@ -22,5 +24,5 @@ interface MoodRepository {
     /**
      * Стрим истории настроения пользователя (на будущее для графиков/статистики).
      */
-    fun getMoodHistoryStream(): Flow<List<MoodEntry>>
+    fun getMoodHistoryStream(userId: UserId): Flow<List<MoodEntry>>
 }

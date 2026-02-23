@@ -19,22 +19,25 @@ import com.example.amulet.shared.domain.practices.model.PracticeTag
 import com.example.amulet.shared.domain.user.model.UserPreferences
 import com.example.amulet.shared.domain.practices.model.PracticeAudioMode
 import com.example.amulet.shared.domain.practices.model.MoodKind
+import com.example.amulet.shared.domain.user.model.UserId
 import kotlinx.coroutines.flow.Flow
 
 interface PracticesRepository {
     fun getPracticesStream(
+        userId: UserId,
         filter: PracticeFilter
     ): Flow<List<Practice>>
 
-    fun getPracticeById(id: PracticeId): Flow<Practice?>
+    fun getPracticeById(userId: UserId, id: PracticeId): Flow<Practice?>
 
     fun getCategoriesStream(): Flow<List<PracticeCategory>>
 
-    fun getFavoritesStream(): Flow<List<Practice>>
+    fun getFavoritesStream(userId: UserId): Flow<List<Practice>>
 
-    fun getRecommendationsStream(limit: Int? = null, contextGoal: PracticeGoal? = null): Flow<List<Practice>>
+    fun getRecommendationsStream(userId: UserId, limit: Int? = null, contextGoal: PracticeGoal? = null): Flow<List<Practice>>
 
     suspend fun search(
+        userId: UserId,
         query: String,
         filter: PracticeFilter
     ): AppResult<List<Practice>>
@@ -46,15 +49,17 @@ interface PracticesRepository {
     suspend fun seedLocalData(): AppResult<Unit>
 
     suspend fun setFavorite(
+        userId: UserId,
         practiceId: PracticeId,
         favorite: Boolean
     ): AppResult<Unit>
 
-    fun getActiveSessionStream(): Flow<PracticeSession?>
+    fun getActiveSessionStream(userId: UserId): Flow<PracticeSession?>
 
-    fun getSessionsHistoryStream(limit: Int? = null): Flow<List<PracticeSession>>
+    fun getSessionsHistoryStream(userId: UserId, limit: Int? = null): Flow<List<PracticeSession>>
 
     suspend fun startPractice(
+        userId: UserId,
         practiceId: PracticeId,
         intensity: Double? = null,
         brightness: Double? = null,
@@ -80,13 +85,14 @@ interface PracticesRepository {
         feedbackNote: String?,
     ): AppResult<PracticeSession>
 
-    fun getUserPreferencesStream(): Flow<UserPreferences>
+    fun getUserPreferencesStream(userId: UserId): Flow<UserPreferences>
     
-    fun getSchedulesStream(): Flow<List<PracticeSchedule>>
+    fun getSchedulesStream(userId: UserId): Flow<List<PracticeSchedule>>
     
-    fun getScheduleByPracticeId(practiceId: PracticeId): Flow<PracticeSchedule?>
+    fun getScheduleByPracticeId(userId: UserId, practiceId: PracticeId): Flow<PracticeSchedule?>
 
     suspend fun upsertSchedule(
+        userId: UserId,
         schedule: PracticeSchedule
     ): AppResult<Unit>
 
@@ -95,23 +101,25 @@ interface PracticesRepository {
     ): AppResult<Unit>
 
     suspend fun updateUserPreferences(
+        userId: UserId,
         preferences: UserPreferences
     ): AppResult<Unit>
 
     suspend fun skipScheduledSession(
+        userId: UserId,
         session: ScheduledSession
     ): AppResult<Unit>
 
     // Plans
-    fun getPlansStream(): Flow<List<PracticePlan>>
-    fun getPlanById(id: String): Flow<PracticePlan?>
+    fun getPlansStream(userId: UserId): Flow<List<PracticePlan>>
+    fun getPlanById(userId: UserId, id: String): Flow<PracticePlan?>
     fun getSchedulesByPlanStream(planId: String): Flow<List<PracticeSchedule>>
-    suspend fun upsertPlan(plan: PracticePlan): AppResult<Unit>
+    suspend fun upsertPlan(userId: UserId, plan: PracticePlan): AppResult<Unit>
     suspend fun deletePlan(planId: String): AppResult<Unit>
 
     // Statistics & badges
-    fun getStatisticsStream(): Flow<PracticeStatistics?>
-    fun getBadgesStream(): Flow<List<PracticeBadge>>
+    fun getStatisticsStream(userId: UserId): Flow<PracticeStatistics?>
+    fun getBadgesStream(userId: UserId): Flow<List<PracticeBadge>>
 
     // Tags & collections (для дома практик / каталога)
     fun getPracticeTagsStream(): Flow<List<PracticeTag>>

@@ -1,9 +1,12 @@
 package com.example.amulet.shared.domain.practices.usecase
 
+import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.domain.practices.MoodRepository
 import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.MoodSource
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
+import com.github.michaelbull.result.getOrElse
 
 /**
  * Use case для логирования выбора настроения пользователем.
@@ -11,12 +14,14 @@ import com.example.amulet.shared.domain.practices.model.MoodSource
  */
 class LogMoodSelectionUseCase(
     private val repository: MoodRepository,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase
 ) {
 
     suspend operator fun invoke(
         mood: MoodKind,
         source: MoodSource = MoodSource.PRACTICES_HOME,
     ): AppResult<Unit> {
-        return repository.logMood(mood = mood, source = source)
+        val userId = getCurrentUserIdUseCase().getOrElse { return AppResult(it) }
+        return repository.logMood(userId = userId, mood = mood, source = source)
     }
 }

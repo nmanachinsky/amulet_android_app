@@ -27,7 +27,7 @@ class SupabaseAuthDataSource @Inject constructor(
     private val auth get() = supabaseClient.auth
 
     override suspend fun signUp(credentials: UserCredentials): AppResult<UserId> =
-        executeAuth("signUp") {
+        executeAuth("signUp", credentials.email) {
             auth.signUpWith(Email) {
                 this.email = credentials.email
                 this.password = credentials.password
@@ -36,7 +36,7 @@ class SupabaseAuthDataSource @Inject constructor(
         }
 
     override suspend fun signIn(credentials: UserCredentials): AppResult<UserId> =
-        executeAuth("signIn") {
+        executeAuth("signIn", credentials.email) {
             auth.signInWith(Email) {
                 this.email = credentials.email
                 this.password = credentials.password
@@ -45,7 +45,7 @@ class SupabaseAuthDataSource @Inject constructor(
         }
 
     override suspend fun signInWithGoogle(idToken: String, rawNonce: String?): AppResult<UserId> =
-        executeAuth("signInWithGoogle") {
+        executeAuth("signInWithGoogle", "google") {
             auth.signInWith(IDToken) {
                 this.idToken = idToken
                 this.provider = Google
@@ -72,26 +72,43 @@ class SupabaseAuthDataSource @Inject constructor(
 
     private suspend fun executeAuth(
         action: String,
+        email: String,
         block: suspend () -> UserSession?
     ): AppResult<UserId> = runCatching {
-        Logger.d("$action: starting", TAG)
+        val maskedEmail = maskEmail(email)
+        Logger.d("$action: initiating auth flow for $maskedEmail", TAG)
         withContext(Dispatchers.IO) { block() }
     }.fold(
         onSuccess = { session ->
             if (session == null) {
-                Logger.w("$action: session not available (email confirmation required?)", tag = TAG)
+
+                Logger.w("$action: session not available for Email (email confirmation required?)", tag = TAG)
                 Err(com.example.amulet.shared.core.AppError.Unauthorized)
             } else {
                 val userId = session.user?.id ?: error("Missing Supabase user")
-                Logger.i("$action: success userId=$userId", TAG)
+                Logger.i("$action: completed successfully for Email, userId=$userId", TAG)
                 Ok(UserId(userId))
             }
         },
         onFailure = { throwable ->
-            Logger.w("$action: failed", throwable, TAG)
+            Logger.e("$action: failed for Email", throwable, TAG)
             Err(errorMapper.map(throwable))
         }
     )
+
+    private fun maskEmail(email: String): String {
+        if (!email.contains('@')) return email
+        val atIndex = email.indexOf('@')
+        if (atIndex <= 0) return "***"
+        val localPart = email.take(atIndex)
+        val domain = email.substring(atIndex)
+        val maskedLocal = if (localPart.length > 2) {
+            "${localPart.first()}***${localPart.last()}"
+        } else {
+            "***"
+        }
+        return "$maskedLocal$domain"
+    }
 
     private companion object {
         private const val TAG = "SupabaseAuthDataSource"

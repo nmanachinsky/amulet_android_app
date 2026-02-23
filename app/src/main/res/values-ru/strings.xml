@@ -6,6 +6,7 @@
     <string name="bottom_nav_hugs">Объятия</string>
     <string name="bottom_nav_patterns">Паттерны</string>
     <string name="bottom_nav_settings">Настройки</string>
+    <string name="guest_hugs_restricted">Войдите в аккаунт, чтобы получить доступ к Объятиям</string>
     
     <!-- Placeholder Screens -->
     <string name="placeholder_library_title">Библиотека практик</string>

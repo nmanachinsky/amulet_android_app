@@ -6,6 +6,6 @@ import com.example.amulet.shared.domain.auth.repository.AuthRepository
 class EnableGuestModeUseCase(
     private val authRepository: AuthRepository
 ) {
-    suspend operator fun invoke(displayName: String? = null, language: String? = null): AppResult<Unit> =
-        authRepository.enableGuestSession(displayName, language)
+    suspend operator fun invoke(): AppResult<Unit> =
+        authRepository.startGuestSession()
 }

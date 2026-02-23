@@ -316,7 +316,7 @@ fun AuthScreen(
 
                 AmuletButton(
                     text = stringResource(R.string.auth_continue_as_guest),
-                    onClick = { onEvent(AuthUiEvent.GuestModeRequested()) },
+                    onClick = { onEvent(AuthUiEvent.GuestModeRequested) },
                     enabled = !state.isSubmitting,
                     variant = ButtonVariant.Text,
                     fullWidth = false

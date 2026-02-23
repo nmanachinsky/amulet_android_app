@@ -52,7 +52,7 @@ class AuthViewModel @Inject constructor(
             is AuthUiEvent.GoogleIdTokenReceived -> signInWithGoogle(event.idToken, event.rawNonce)
             AuthUiEvent.GoogleSignInCancelled -> _uiState.update { it.copy(isSubmitting = false) }
             is AuthUiEvent.GoogleSignInError -> handleGoogleSignInError(event.throwable)
-            is AuthUiEvent.GuestModeRequested -> enableGuestMode(event.displayName, event.language)
+            is AuthUiEvent.GuestModeRequested -> enableGuestMode()
         }
     }
 
@@ -197,12 +197,12 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private fun enableGuestMode(displayName: String?, language: String?) {
+    private fun enableGuestMode() {
         Logger.d("enableGuestMode requested", TAG)
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, error = null) }
 
-            val result = enableGuestModeUseCase(displayName, language)
+            val result = enableGuestModeUseCase()
             result.fold(
                 success = {
                     Logger.i("enableGuestMode success", TAG)

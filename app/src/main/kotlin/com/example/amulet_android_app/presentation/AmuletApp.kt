@@ -11,7 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.amulet.core.design.AmuletTheme
 import com.example.amulet.core.design.scaffold.ProvideScaffoldState
 import com.example.amulet.core.design.scaffold.rememberScaffoldState
-import com.example.amulet_android_app.presentation.session.AuthState
+import com.example.amulet.shared.domain.auth.model.AuthState
 import com.example.amulet_android_app.presentation.session.SessionViewModel
 import com.example.amulet_android_app.presentation.splash.SplashScreen
 import com.example.amulet_android_app.navigation.AppNavHost
@@ -39,7 +39,7 @@ fun AmuletApp(
                             startDestination = AuthGraphDestination,
                         )
                     }
-                    is AuthState.LoggedIn -> key(AuthState.LoggedIn) {
+                    is AuthState.LoggedIn -> key(state) {
                         val navController = rememberNavController()
                         MainScaffold(navController = navController) {
                             AppNavHost(
@@ -48,7 +48,7 @@ fun AmuletApp(
                             )
                         }
                     }
-                    AuthState.Guest -> key(AuthState.Guest) {
+                    is AuthState.Guest -> key(state) {
                         val navController = rememberNavController()
                         MainScaffold(navController = navController) {
                             AppNavHost(

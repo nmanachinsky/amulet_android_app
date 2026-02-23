@@ -1,5 +1,6 @@
 package com.example.amulet.shared.domain.user.usecase
 
+import com.example.amulet.shared.domain.auth.model.AuthState
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.repository.UserRepository
@@ -20,7 +21,10 @@ class ObserveCurrentUserUseCase(
         return authRepository.authState
             .flatMapLatest { context ->
                 when (context) {
-                    is UserSessionContext.LoggedIn -> {
+                    is AuthState.LoggedIn -> {
+                        userRepository.observeUser(context.userId)
+                    }
+                    is AuthState.Guest -> {
                         userRepository.observeUser(context.userId)
                     }
                     else -> flowOf(null)

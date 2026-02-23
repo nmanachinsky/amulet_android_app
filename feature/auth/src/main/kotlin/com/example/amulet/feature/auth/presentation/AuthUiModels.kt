@@ -20,17 +20,17 @@ sealed interface AuthUiEvent {
     data class EmailChanged(val value: String) : AuthUiEvent
     data class PasswordChanged(val value: String) : AuthUiEvent
     data class ConfirmPasswordChanged(val value: String) : AuthUiEvent
-    data object Submit : AuthUiEvent
-    data object ErrorConsumed : AuthUiEvent
-    data object AuthModeSwitchRequested : AuthUiEvent
-    data object GoogleSignInRequested : AuthUiEvent
+    object Submit : AuthUiEvent
+    object ErrorConsumed : AuthUiEvent
+    object AuthModeSwitchRequested : AuthUiEvent
+    object GoogleSignInRequested : AuthUiEvent
     data class GoogleIdTokenReceived(val idToken: String, val rawNonce: String?) : AuthUiEvent
-    data object GoogleSignInCancelled : AuthUiEvent
+    object GoogleSignInCancelled : AuthUiEvent
     data class GoogleSignInError(val throwable: Throwable?) : AuthUiEvent
-    data class GuestModeRequested(val displayName: String? = null, val language: String? = null) : AuthUiEvent
+    object GuestModeRequested : AuthUiEvent
 }
 
 sealed interface AuthSideEffect {
-    data object SignInSuccess : AuthSideEffect
-    data object LaunchGoogleSignIn : AuthSideEffect
+    object SignInSuccess : AuthSideEffect
+    object LaunchGoogleSignIn : AuthSideEffect
 }

@@ -9,6 +9,7 @@ import com.example.amulet.data.user.mapper.UserMapper
 import com.example.amulet.shared.domain.user.repository.UserRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -29,7 +30,8 @@ interface UserDataModule {
     @Singleton
     fun bindUserLocalDataSource(impl: UserLocalDataSourceImpl): UserLocalDataSource
 
-    @Binds
-    @Singleton
-    fun bindUserMapper(impl: UserMapper): UserMapper
+    companion object {
+        @Provides
+        fun provideUserMapper(): UserMapper = UserMapper
+    }
 }

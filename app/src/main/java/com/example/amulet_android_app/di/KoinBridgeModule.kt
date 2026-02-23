@@ -4,6 +4,9 @@ import android.app.Application
 import com.example.amulet.shared.di.sharedKoinModules
 import com.example.amulet.shared.domain.auth.repository.AuthRepository
 import com.example.amulet.shared.domain.auth.usecase.EnableGuestModeUseCase
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
+import com.example.amulet.shared.domain.auth.usecase.ObserveAuthStateUseCase
+import com.example.amulet.shared.domain.auth.usecase.ObserveCurrentUserIdUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInWithGoogleUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
@@ -70,7 +73,6 @@ import com.example.amulet.shared.domain.practices.usecase.DeleteSchedulesForCour
 import com.example.amulet.shared.domain.practices.usecase.SkipScheduledSessionUseCase
 import com.example.amulet.shared.domain.practices.usecase.LogMoodSelectionUseCase
 import com.example.amulet.shared.domain.dashboard.usecase.GetDashboardDailyStatsUseCase
-import com.example.amulet.shared.domain.privacy.PrivacyRepository
 import com.example.amulet.shared.domain.rules.RulesRepository
 import com.example.amulet.shared.domain.notifications.NotificationsRepository
 import com.example.amulet.shared.domain.user.repository.UserRepository
@@ -126,8 +128,6 @@ object KoinBridgeModule {
     @Singleton
     fun provideKoin(
         application: Application,
-        userSessionProvider: UserSessionProvider,
-        userSessionUpdater: UserSessionUpdater,
         authRepository: AuthRepository,
         userRepository: UserRepository,
         devicesRepository: DevicesRepository,
@@ -138,7 +138,6 @@ object KoinBridgeModule {
         practicesRepository: PracticesRepository,
         moodRepository: MoodRepository,
         coursesRepository: CoursesRepository,
-        privacyRepository: PrivacyRepository,
         rulesRepository: RulesRepository,
         notificationsRepository: NotificationsRepository,
     ): Koin =
@@ -146,8 +145,6 @@ object KoinBridgeModule {
             androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.NONE)
             androidContext(application)
             val bridgeModule = module {
-                single<UserSessionProvider> { userSessionProvider }
-                single<UserSessionUpdater> { userSessionUpdater }
                 single<AuthRepository> { authRepository }
                 single<UserRepository> { userRepository }
                 single<DevicesRepository> { devicesRepository }
@@ -158,7 +155,6 @@ object KoinBridgeModule {
                 single<PracticesRepository> { practicesRepository }
                 single<MoodRepository> { moodRepository }
                 single<CoursesRepository> { coursesRepository }
-                single<PrivacyRepository> { privacyRepository }
                 single<RulesRepository> { rulesRepository }
                 single<NotificationsRepository> { notificationsRepository }
                 
@@ -257,6 +253,15 @@ object KoinBridgeModule {
 
     @Provides
     fun provideEnableGuestModeUseCase(koin: Koin): EnableGuestModeUseCase = koin.get()
+
+    @Provides
+    fun provideObserveCurrentUserIdUseCase(koin: Koin): ObserveCurrentUserIdUseCase = koin.get()
+
+    @Provides
+    fun provideGetCurrentUserIdUseCase(koin: Koin): GetCurrentUserIdUseCase = koin.get()
+
+    @Provides
+    fun provideObserveAuthStateUseCase(koin: Koin): ObserveAuthStateUseCase = koin.get()
     
     // User UseCases
     @Provides

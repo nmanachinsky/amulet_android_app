@@ -22,6 +22,7 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.storage.storage
+import javax.inject.Named
 import javax.inject.Singleton
 
 private val Context.supabaseSessionDataStore: DataStore<Preferences> by preferencesDataStore(
@@ -39,6 +40,7 @@ abstract class SupabaseModule {
 
         @Provides
         @Singleton
+        @Named("supabaseSession")
         fun provideSupabaseSessionDataStore(
             @ApplicationContext context: Context
         ): DataStore<Preferences> = context.supabaseSessionDataStore

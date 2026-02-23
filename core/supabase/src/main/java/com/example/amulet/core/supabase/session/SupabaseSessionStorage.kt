@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -21,7 +22,7 @@ import javax.inject.Singleton
 @Singleton
 @OptIn(ExperimentalTime::class)
 class SupabaseSessionStorage @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    @Named("supabaseSession") private val dataStore: DataStore<Preferences>
 ) {
     
     suspend fun saveSession(session: UserSession) {

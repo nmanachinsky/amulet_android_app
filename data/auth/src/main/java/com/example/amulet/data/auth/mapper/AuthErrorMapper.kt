@@ -5,8 +5,7 @@ import io.github.jan.supabase.exceptions.RestException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
-class AuthErrorMapper @Inject constructor() {
+object AuthErrorMapper {
 
     fun map(throwable: Throwable): AppError = when (throwable) {
         is RestException -> mapRestException(throwable)

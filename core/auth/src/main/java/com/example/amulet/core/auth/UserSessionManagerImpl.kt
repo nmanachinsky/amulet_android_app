@@ -16,11 +16,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class UserSessionManagerImpl @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
+    @Named("userSession") private val dataStore: DataStore<Preferences>,
     private val mapper: AuthStateMapper
 ) : UserSessionManager {
 

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.flowOf
 
 /**
  * UseCase для наблюдения за текущим пользователем из БД.
- * Использует UserSessionProvider для получения ID, затем запрашивает данные из репозитория.
+ * Использует AuthRepository для получения ID, затем запрашивает данные из репозитория.
  */
 class ObserveCurrentUserUseCase(
     private val userRepository: UserRepository,

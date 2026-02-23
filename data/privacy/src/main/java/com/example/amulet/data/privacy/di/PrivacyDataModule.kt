@@ -1,8 +1,6 @@
 package com.example.amulet.data.privacy.di
 
-import com.example.amulet.data.privacy.PrivacyRepositoryImpl
 import com.example.amulet.data.privacy.NotificationsRepositoryImpl
-import com.example.amulet.shared.domain.privacy.PrivacyRepository
 import com.example.amulet.shared.domain.notifications.NotificationsRepository
 import dagger.Binds
 import dagger.Module
@@ -13,10 +11,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 interface PrivacyDataModule {
-
-    @Binds
-    @Singleton
-    fun bindPrivacyRepository(impl: PrivacyRepositoryImpl): PrivacyRepository
 
     @Binds
     @Singleton

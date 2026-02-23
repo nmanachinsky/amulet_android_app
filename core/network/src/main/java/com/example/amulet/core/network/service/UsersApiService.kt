@@ -36,4 +36,10 @@ interface UsersApiService {
 
     @GET("privacy/rights")
     suspend fun getPrivacyRights(): PrivacyRightsResponseDto
+
+    @POST("privacy/export")
+    suspend fun requestDataExport(): PrivacyRightsResponseDto
+
+    @POST("privacy/delete")
+    suspend fun requestAccountDeletion(): PrivacyRightsResponseDto
 }

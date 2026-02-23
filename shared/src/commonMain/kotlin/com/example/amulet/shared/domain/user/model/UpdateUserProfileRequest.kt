@@ -1,5 +1,7 @@
 package com.example.amulet.shared.domain.user.model
 
+import com.example.amulet.shared.domain.privacy.model.UserConsents
+
 /**
  * Запрос на обновление профиля текущего пользователя.
  *
@@ -11,4 +13,5 @@ data class UpdateUserProfileRequest(
     val avatarUrl: String? = null,
     val timezone: String? = null,
     val language: String? = null,
+    val consents: UserConsents? = null,
 )

@@ -9,6 +9,7 @@ import com.example.amulet.data.user.mapper.UserMapper
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
+import com.example.amulet.shared.domain.privacy.model.UserConsents
 import com.example.amulet.shared.domain.user.model.UpdateUserProfileRequest
 import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.model.UserId
@@ -16,9 +17,13 @@ import com.example.amulet.shared.domain.user.repository.UserRepository
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.fold
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 @Singleton
@@ -108,6 +113,65 @@ class UserRepositoryImpl @Inject constructor(
                 Logger.e("updateProfile: failed error=$error", tag = TAG)
                 Err(error)
             }
+        )
+    }
+
+    override fun getUserConsentsStream(userId: UserId): Flow<UserConsents> {
+        return localDataSource.observeConsents(userId.value)
+    }
+
+    override suspend fun updateUserConsents(userId: UserId, consents: UserConsents): AppResult<Unit> {
+        val dtoRequest = UserUpdateRequestDto(consents = mapConsentsToJson(consents))
+        return remoteDataSource.updateCurrentUser(dtoRequest).fold(
+            success = { dto ->
+                localDataSource.updateConsents(userId.value, consents)
+                Logger.i("updateUserConsents: success userId=${userId.value}", TAG)
+                Ok(Unit)
+            },
+            failure = { error ->
+                localDataSource.updateConsents(userId.value, consents)
+                Logger.w("updateUserConsents: remote failed, updated locally error=$error", tag = TAG)
+                Ok(Unit)
+            }
+        )
+    }
+
+    override suspend fun requestDataExport(userId: UserId): AppResult<Unit> {
+        Logger.d("requestDataExport: starting userId=${userId.value}", TAG)
+        return remoteDataSource.requestDataExport().fold(
+            success = {
+                Logger.i("requestDataExport: success", TAG)
+                Ok(Unit)
+            },
+            failure = { error ->
+                Logger.e("requestDataExport: failed error=$error", tag = TAG)
+                Err(error)
+            }
+        )
+    }
+
+    override suspend fun requestAccountDeletion(userId: UserId): AppResult<Unit> {
+        Logger.d("requestAccountDeletion: starting userId=${userId.value}", TAG)
+        return remoteDataSource.requestAccountDeletion().fold(
+            success = {
+                Logger.i("requestAccountDeletion: success", TAG)
+                Ok(Unit)
+            },
+            failure = { error ->
+                Logger.e("requestAccountDeletion: failed error=$error", tag = TAG)
+                Err(error)
+            }
+        )
+    }
+
+    private fun mapConsentsToJson(consents: UserConsents): JsonObject {
+        return JsonObject(
+            mapOf(
+                "analytics" to JsonPrimitive(consents.analytics),
+                "marketing" to JsonPrimitive(consents.marketing),
+                "notifications" to JsonPrimitive(consents.notifications),
+                "updatedAt" to (consents.updatedAt?.let { JsonPrimitive(it.toString()) } ?: JsonNull)
+            )
         )
     }
 

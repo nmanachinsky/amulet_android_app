@@ -174,34 +174,34 @@ private val sharedModule = module {
     factory { PatternEditorFacade(get(), get(), get(), get()) }
 
     // Practices UseCases
-    factory { GetPracticesStreamUseCase(get()) }
-    factory { GetPracticeByIdUseCase(get()) }
+    factory { GetPracticesStreamUseCase(get(), get()) }
+    factory { GetPracticeByIdUseCase(get(), get()) }
     factory { GetCategoriesStreamUseCase(get()) }
-    factory { GetFavoritesStreamUseCase(get()) }
-    factory { SearchPracticesUseCase(get()) }
+    factory { GetFavoritesStreamUseCase(get(), get()) }
+    factory { SearchPracticesUseCase(get(), get()) }
     factory { RefreshPracticesUseCase(get()) }
     factory { UpsertPracticeUseCase(get()) }
-    factory { SetFavoritePracticeUseCase(get()) }
-    factory { GetActiveSessionStreamUseCase(get()) }
-    factory { GetSessionsHistoryStreamUseCase(get()) }
-    factory { GetScheduledSessionsStreamUseCase(get(), get()) }
-    factory { GetScheduledSessionsForDateRangeUseCase(get(), get()) }
+    factory { SetFavoritePracticeUseCase(get(), get()) }
+    factory { GetActiveSessionStreamUseCase(get(), get()) }
+    factory { GetSessionsHistoryStreamUseCase(get(), get()) }
+    factory { GetScheduledSessionsStreamUseCase(get(), get(), get()) }
+    factory { GetScheduledSessionsForDateRangeUseCase(get(), get(), get()) }
     factory { RefreshPracticesCatalogUseCase(get()) }
-    factory { StartPracticeUseCase(get()) }
+    factory { StartPracticeUseCase(get(), get()) }
     factory { StopSessionUseCase(get()) }
-    factory { GetUserPreferencesStreamUseCase(get()) }
-    factory { UpdateUserPreferencesUseCase(get()) }
+    factory { GetUserPreferencesStreamUseCase(get(), get()) }
+    factory { UpdateUserPreferencesUseCase(get(), get()) }
     factory { UpdatePracticeDefaultsUseCase(get(), get()) }
-    factory { GetRecommendationsStreamUseCase(get()) }
-    factory { UpsertPracticeScheduleUseCase(get()) }
-    factory { GetScheduleByPracticeIdUseCase(get()) }
+    factory { GetRecommendationsStreamUseCase(get(), get()) }
+    factory { UpsertPracticeScheduleUseCase(get(), get()) }
+    factory { GetScheduleByPracticeIdUseCase(get(), get()) }
     factory { DeletePracticeScheduleUseCase(get()) }
-    factory { DeleteSchedulesForCourseUseCase(get()) }
-    factory { SkipScheduledSessionUseCase(get()) }
-    factory { LogMoodSelectionUseCase(get()) }
-    factory { GetPracticeScriptUseCase(get()) }
-    factory { UpdateSessionFeedbackUseCase(get(), get()) }
-    factory { UpdateSessionMoodBeforeUseCase(get(), get()) }
+    factory { DeleteSchedulesForCourseUseCase(get(), get()) }
+    factory { SkipScheduledSessionUseCase(get(), get()) }
+    factory { LogMoodSelectionUseCase(get(), get()) }
+    factory { GetPracticeScriptUseCase(get(), get()) }
+    factory { UpdateSessionFeedbackUseCase(get(), get(), get()) }
+    factory { UpdateSessionMoodBeforeUseCase(get(), get(), get()) }
     factory { GetDashboardDailyStatsUseCase(get(), get(), get(), get()) }
     factory { UploadPracticeScriptToDeviceUseCase(get()) }
     factory { PlayPracticeScriptOnDeviceUseCase(get()) }
@@ -244,7 +244,7 @@ private val sharedModule = module {
     factory { EnrollCourseUseCase(get(), get(), get(), get()) }
 
     // Complete practice session (нужен доступ к практикам и курсам для источника FromCourse)
-    factory { CompletePracticeSessionUseCase(get(), get()) }
+    factory { CompletePracticeSessionUseCase(get(), get(), get()) }
 }
 
 fun sharedKoinModules(): List<Module> = listOf(sharedModule)

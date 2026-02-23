@@ -10,6 +10,7 @@ import com.example.amulet.shared.domain.practices.model.MoodEntry
 import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.PracticeSession
 import com.example.amulet.shared.domain.user.model.UserId
+import com.example.amulet.shared.domain.auth.usecase.ObserveCurrentUserIdUseCase
 import com.example.amulet.shared.domain.user.usecase.ObserveCurrentUserUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -34,31 +35,33 @@ class GetDashboardDailyStatsUseCase(
     private val practicesRepository: PracticesRepository,
     private val moodRepository: MoodRepository,
     private val observeHugsForUserUseCase: ObserveHugsForUserUseCase,
-    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
+    private val observeCurrentUserIdUseCase: ObserveCurrentUserIdUseCase,
 ) {
 
     operator fun invoke(): Flow<DashboardDailyStats> {
         val timeZone = TimeZone.currentSystemDefault()
         val today = Clock.System.now().toLocalDateTime(timeZone).date
 
-        val sessionsFlow = practicesRepository.getSessionsHistoryStream(limit = null)
-        val moodsFlow = moodRepository.getMoodHistoryStream()
-        val hugsFlow: Flow<List<Hug>> = observeCurrentUserUseCase()
-            .flatMapLatest { user ->
-                val userId = user?.id ?: return@flatMapLatest flowOf(emptyList())
-                observeHugsForUserUseCase(userId)
+        return observeCurrentUserIdUseCase().flatMapLatest { userId ->
+            if (userId == null) {
+                return@flatMapLatest flowOf(DashboardDailyStats(0, 0, DEFAULT_CALM_LEVEL))
             }
 
-        return combine(sessionsFlow, moodsFlow, hugsFlow) { sessions, moods, hugs ->
-            val practiceMinutes = calculateTodayPracticeMinutes(sessions, today, timeZone)
-            val hugsCount = calculateTodayHugsCount(hugs, today, timeZone)
-            val calmLevel = calculateCalmLevel(moods, today, timeZone)
+            val sessionsFlow = practicesRepository.getSessionsHistoryStream(userId, null)
+            val moodsFlow = moodRepository.getMoodHistoryStream(userId)
+            val hugsFlow = observeHugsForUserUseCase(userId)
 
-            DashboardDailyStats(
-                practiceMinutes = practiceMinutes,
-                hugsCount = hugsCount,
-                calmLevel = calmLevel,
-            )
+            combine(sessionsFlow, moodsFlow, hugsFlow) { sessions, moods, hugs ->
+                val practiceMinutes = calculateTodayPracticeMinutes(sessions, today, timeZone)
+                val hugsCount = calculateTodayHugsCount(hugs, today, timeZone)
+                val calmLevel = calculateCalmLevel(moods, today, timeZone)
+
+                DashboardDailyStats(
+                    practiceMinutes = practiceMinutes,
+                    hugsCount = hugsCount,
+                    calmLevel = calmLevel,
+                )
+            }
         }
     }
 

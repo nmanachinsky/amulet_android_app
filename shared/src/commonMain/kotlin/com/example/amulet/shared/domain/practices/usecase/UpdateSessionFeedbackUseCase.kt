@@ -7,6 +7,8 @@ import com.example.amulet.shared.domain.practices.model.MoodKind
 import com.example.amulet.shared.domain.practices.model.MoodSource
 import com.example.amulet.shared.domain.practices.model.PracticeSession
 import com.example.amulet.shared.domain.practices.model.PracticeSessionId
+import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
+import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,6 +20,7 @@ import kotlinx.coroutines.withContext
 class UpdateSessionFeedbackUseCase(
     private val repository: PracticesRepository,
     private val moodRepository: MoodRepository,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
@@ -35,12 +38,13 @@ class UpdateSessionFeedbackUseCase(
         )
 
         if (moodAfter != null) {
-            // Логируем настроение после практики. Ошибку логирования не прокидываем наружу,
-            // чтобы не ломать основной сценарий сохранения фидбека.
-            moodRepository.logMood(
-                mood = moodAfter,
-                source = MoodSource.PRACTICE_AFTER,
-            )
+            getCurrentUserIdUseCase().onSuccess { userId ->
+                moodRepository.logMood(
+                    userId = userId,
+                    mood = moodAfter,
+                    source = MoodSource.PRACTICE_AFTER,
+                )
+            }
         }
 
         result

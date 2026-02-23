@@ -56,25 +56,16 @@ import javax.inject.Singleton
 class PatternsRepositoryImpl @Inject constructor(
     private val localDataSource: LocalPatternDataSource,
     private val remoteDataSource: RemotePatternDataSource,
-    private val sessionProvider: UserSessionProvider,
     private val outboxScheduler: OutboxScheduler,
     private val json: Json
 ) : PatternsRepository {
     
-    private val currentUserId: String
-        get() {
-            val context = sessionProvider.currentContext
-            return when (context) {
-                is UserSessionContext.LoggedIn -> context.userId.value
-                else -> throw IllegalStateException("User not authenticated")
-            }
-        }
-    
-    override fun getPatternsStream(filter: PatternFilter): Flow<List<Pattern>> {
+    override fun getPatternsStream(filter: PatternFilter, userId: UserId): Flow<List<Pattern>> {
+        val userIdValue = userId.value
         val baseFlow = when {
             filter.presetsOnly -> localDataSource.observePresets()
             filter.publicOnly -> localDataSource.observePublic()
-            else -> localDataSource.observeByOwner(currentUserId)
+            else -> localDataSource.observeByOwner(userIdValue)
         }
         
         return baseFlow.map { entities ->
@@ -92,7 +83,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override fun getPatternById(id: PatternId): Flow<Pattern?> {
+    override fun getPatternById(id: PatternId, userId: UserId): Flow<Pattern?> {
         return localDataSource.observeById(id.value).map { entity ->
             entity?.let {
                 val tags = localDataSource.getTagsForPattern(it.id).toTagNames()
@@ -102,8 +93,8 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override fun getMyPatternsStream(): Flow<List<Pattern>> {
-        return localDataSource.observeByOwner(currentUserId).map { entities ->
+    override fun getMyPatternsStream(userId: UserId): Flow<List<Pattern>> {
+        return localDataSource.observeByOwner(userId.value).map { entities ->
             entities.map { entity ->
                 val tags = localDataSource.getTagsForPattern(entity.id).toTagNames()
                 val sharedWith = localDataSource.getSharesForPattern(entity.id).toUserIds()
@@ -176,7 +167,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun createPattern(draft: PatternDraft): AppResult<Pattern> {
+    override suspend fun createPattern(draft: PatternDraft, userId: UserId): AppResult<Pattern> {
         Logger.d("Создание паттерна: ${draft.title}, тип: ${draft.kind}", "PatternsRepositoryImpl")
         return try {
             val patternId = UUID.randomUUID().toString()
@@ -186,7 +177,7 @@ class PatternsRepositoryImpl @Inject constructor(
             val pattern = Pattern(
                 id = PatternId(patternId),
                 version = 1,
-                ownerId = UserId(currentUserId),
+                ownerId = userId,
                 kind = draft.kind,
                 spec = draft.spec,
                 public = false,
@@ -247,7 +238,8 @@ class PatternsRepositoryImpl @Inject constructor(
     override suspend fun updatePattern(
         id: PatternId,
         version: Int,
-        updates: PatternUpdate
+        updates: PatternUpdate,
+        userId: UserId
     ): AppResult<Pattern> {
         Logger.d("Обновление паттерна: ${id.value}, версия: $version", "PatternsRepositoryImpl")
         return try {
@@ -315,7 +307,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun deletePattern(id: PatternId): AppResult<Unit> {
+    override suspend fun deletePattern(id: PatternId, userId: UserId): AppResult<Unit> {
         Logger.d("Удаление паттерна: ${id.value}", "PatternsRepositoryImpl")
         return try {
             val nowMillis = System.currentTimeMillis()
@@ -355,7 +347,8 @@ class PatternsRepositoryImpl @Inject constructor(
     
     override suspend fun publishPattern(
         id: PatternId,
-        metadata: PublishMetadata
+        metadata: PublishMetadata,
+        userId: UserId
     ): AppResult<Pattern> {
         Logger.d("Публикация паттерна: ${id.value}, заголовок: ${metadata.title}", "PatternsRepositoryImpl")
         return try {
@@ -384,7 +377,7 @@ class PatternsRepositoryImpl @Inject constructor(
                     put("version", currentPattern.version)
                     put("public", true)
                     put("title", metadata.title)
-                    metadata.description?.let { put("description", it) } ?: put("description", JsonNull)
+                    put("description", metadata.description) ?: put("description", JsonNull)
                     put("tags", buildJsonArray { metadata.tags.forEach { add(JsonPrimitive(it)) } })
                 }
                 val payload = json.encodeToString(payloadObject)
@@ -417,7 +410,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun sharePattern(id: PatternId, userIds: List<UserId>): AppResult<Unit> {
+    override suspend fun sharePattern(id: PatternId, userIds: List<UserId>, userId: UserId): AppResult<Unit> {
         Logger.d("Шаринг паттерна: ${id.value}, пользователям: ${userIds.size}", "PatternsRepositoryImpl")
         return try {
             val nowMillis = System.currentTimeMillis()
@@ -461,7 +454,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun addTag(patternId: PatternId, tag: String): AppResult<Unit> {
+    override suspend fun addTag(patternId: PatternId, tag: String, userId: UserId): AppResult<Unit> {
         Logger.d("Добавление тега к паттерну: ${patternId.value}, тег: $tag", "PatternsRepositoryImpl")
         return try {
             val entity = localDataSource.observeById(patternId.value).first()
@@ -526,7 +519,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun removeTag(patternId: PatternId, tag: String): AppResult<Unit> {
+    override suspend fun removeTag(patternId: PatternId, tag: String, userId: UserId): AppResult<Unit> {
         Logger.d("Удаление тега из паттерна: ${patternId.value}, тег: $tag", "PatternsRepositoryImpl")
         return try {
             val entity = localDataSource.observeById(patternId.value).first()
@@ -619,7 +612,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun setPatternTags(patternId: PatternId, tags: List<String>): AppResult<Unit> {
+    override suspend fun setPatternTags(patternId: PatternId, tags: List<String>, userId: UserId): AppResult<Unit> {
         Logger.d("Перезапись тегов для паттерна: ${patternId.value}, всего: ${tags.size}", "PatternsRepositoryImpl")
         return try {
             val entity = localDataSource.observeById(patternId.value).first()
@@ -694,7 +687,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun ensurePatternLoaded(id: PatternId): AppResult<Unit> {
+    override suspend fun ensurePatternLoaded(id: PatternId, userId: UserId): AppResult<Unit> {
         Logger.d("ensurePatternLoaded: start patternId=${id.value}", "PatternsRepositoryImpl")
         return try {
             // Если паттерн уже есть локально, ничего не делаем.
@@ -713,7 +706,7 @@ class PatternsRepositoryImpl @Inject constructor(
                 val tagIds = tags.map { it.id }
                 val sharedWith = dto.sharedWith ?: emptyList()
 
-                val entity = dto.toEntity().copy(ownerId = currentUserId)
+                val entity = dto.toEntity().copy(ownerId = userId.value)
                 Logger.d("ensurePatternLoaded: upsert local patternId=${id.value}", "PatternsRepositoryImpl")
                 localDataSource.upsertPatternWithRelations(
                     pattern = entity,
@@ -740,7 +733,7 @@ class PatternsRepositoryImpl @Inject constructor(
                         // Перезаписываем локальные сегменты без постановки задач в Outbox.
                         localDataSource.deleteSegmentsForPattern(id.value)
                         segmentDtos.forEach { segmentDto ->
-                            val segmentEntity = segmentDto.toEntity().copy(ownerId = currentUserId)
+                            val segmentEntity = segmentDto.toEntity().copy(ownerId = userId.value)
                             val segmentTags = segmentDto.tags?.toTagEntities() ?: emptyList()
                             val segmentTagIds = segmentTags.map { it.id }
                             localDataSource.upsertPatternWithRelations(
@@ -783,7 +776,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getSegmentsForPattern(parentId: PatternId): AppResult<List<Pattern>> {
+    override suspend fun getSegmentsForPattern(parentId: PatternId, userId: UserId): AppResult<List<Pattern>> {
         return try {
             val entities = localDataSource.getSegmentsForPattern(parentId.value)
             val patterns = entities.map { entity ->
@@ -798,7 +791,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteSegmentsForPattern(parentId: PatternId): AppResult<Unit> {
+    override suspend fun deleteSegmentsForPattern(parentId: PatternId, userId: UserId): AppResult<Unit> {
         return try {
             Logger.d("Удаление сегментов паттерна (локально): $parentId", "PatternsRepositoryImpl")
             localDataSource.deleteSegmentsForPattern(parentId.value)
@@ -839,7 +832,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun upsertSegmentsForPattern(parentId: PatternId, segments: List<Pattern>): AppResult<Unit> {
+    override suspend fun upsertSegmentsForPattern(parentId: PatternId, segments: List<Pattern>, userId: UserId): AppResult<Unit> {
         Logger.d("Пересохранение сегментов паттерна: $parentId, всего: ${segments.size}", "PatternsRepositoryImpl")
         return try {
             localDataSource.withPatternTransaction {
@@ -917,7 +910,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun upsertPatternMarkers(markers: PatternMarkers): AppResult<Unit> {
+    override suspend fun upsertPatternMarkers(markers: PatternMarkers, userId: UserId): AppResult<Unit> {
         return try {
             Logger.d(
                 "Обновление маркеров паттерна: ${markers.patternId}, всего маркеров=${markers.markersMs.size}",
@@ -974,7 +967,7 @@ class PatternsRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deletePatternMarkers(patternId: PatternId): AppResult<Unit> {
+    override suspend fun deletePatternMarkers(patternId: PatternId, userId: UserId): AppResult<Unit> {
         return try {
             localDataSource.deletePatternMarkers(patternId.value)
             // Ставим задачу в Outbox для удаления маркеров на сервере.

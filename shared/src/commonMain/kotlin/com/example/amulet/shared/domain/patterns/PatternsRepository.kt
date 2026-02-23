@@ -19,12 +19,13 @@ import kotlinx.coroutines.flow.Flow
 interface PatternsRepository {
     // Потоки данных (только из локальной БД)
     fun getPatternsStream(
-        filter: PatternFilter
+        filter: PatternFilter,
+        userId: UserId
     ): Flow<List<Pattern>>
     
-    fun getPatternById(id: PatternId): Flow<Pattern?>
+    fun getPatternById(id: PatternId, userId: UserId): Flow<Pattern?>
     
-    fun getMyPatternsStream(): Flow<List<Pattern>>
+    fun getMyPatternsStream(userId: UserId): Flow<List<Pattern>>
     
     // Синхронизация (ручная, по запросу пользователя)
     suspend fun syncWithCloud(): AppResult<SyncResult>
@@ -34,38 +35,45 @@ interface PatternsRepository {
     
     // Команды
     suspend fun createPattern(
-        draft: PatternDraft
+        draft: PatternDraft,
+        userId: UserId
     ): AppResult<Pattern>
     
     suspend fun updatePattern(
         id: PatternId,
         version: Int,
-        updates: PatternUpdate
+        updates: PatternUpdate,
+        userId: UserId
     ): AppResult<Pattern>
     
     suspend fun deletePattern(
-        id: PatternId
+        id: PatternId,
+        userId: UserId
     ): AppResult<Unit>
     
     suspend fun publishPattern(
         id: PatternId,
-        metadata: PublishMetadata
+        metadata: PublishMetadata,
+        userId: UserId
     ): AppResult<Pattern>
     
     suspend fun sharePattern(
         id: PatternId,
-        userIds: List<UserId>
+        userIds: List<UserId>,
+        userId: UserId
     ): AppResult<Unit>
     
     // Теги
     suspend fun addTag(
         patternId: PatternId,
-        tag: String
+        tag: String,
+        userId: UserId
     ): AppResult<Unit>
     
     suspend fun removeTag(
         patternId: PatternId,
-        tag: String
+        tag: String,
+        userId: UserId
     ): AppResult<Unit>
 
     // Справочник тегов
@@ -79,7 +87,8 @@ interface PatternsRepository {
     // Массовые операции
     suspend fun setPatternTags(
         patternId: PatternId,
-        tags: List<String>
+        tags: List<String>,
+        userId: UserId
     ): AppResult<Unit>
 
     suspend fun deleteTags(names: List<String>): AppResult<Unit>
@@ -88,22 +97,22 @@ interface PatternsRepository {
      * Гарантировать наличие паттерна локально.
      * Если паттерна нет в БД, пробуем загрузить его с сервера по id и сохранить.
      */
-    suspend fun ensurePatternLoaded(id: PatternId): AppResult<Unit>
+    suspend fun ensurePatternLoaded(id: PatternId, userId: UserId): AppResult<Unit>
 
     /**
      * Получить сегменты паттерна по parentPatternId (локально).
      */
-    suspend fun getSegmentsForPattern(parentId: PatternId): AppResult<List<Pattern>>
+    suspend fun getSegmentsForPattern(parentId: PatternId, userId: UserId): AppResult<List<Pattern>>
 
     /**
      * Удалить все сегменты паттерна по parentPatternId (локально).
      */
-    suspend fun deleteSegmentsForPattern(parentId: PatternId): AppResult<Unit>
+    suspend fun deleteSegmentsForPattern(parentId: PatternId, userId: UserId): AppResult<Unit>
 
     /**
      * Пересохранить сегменты паттерна: удалить старые и записать новые (локально).
      */
-    suspend fun upsertSegmentsForPattern(parentId: PatternId, segments: List<Pattern>): AppResult<Unit>
+    suspend fun upsertSegmentsForPattern(parentId: PatternId, segments: List<Pattern>, userId: UserId): AppResult<Unit>
 
     /**
      * Получить маркеры таймлайна для паттерна.
@@ -113,10 +122,10 @@ interface PatternsRepository {
     /**
      * Сохранить или обновить маркеры таймлайна для паттерна.
      */
-    suspend fun upsertPatternMarkers(markers: PatternMarkers): AppResult<Unit>
+    suspend fun upsertPatternMarkers(markers: PatternMarkers, userId: UserId): AppResult<Unit>
 
     /**
      * Удалить маркеры таймлайна для паттерна.
      */
-    suspend fun deletePatternMarkers(patternId: PatternId): AppResult<Unit>
+    suspend fun deletePatternMarkers(patternId: PatternId, userId: UserId): AppResult<Unit>
 }

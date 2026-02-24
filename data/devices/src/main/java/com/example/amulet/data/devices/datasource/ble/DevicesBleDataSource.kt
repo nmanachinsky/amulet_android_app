@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Источник данных для работы с устройствами через BLE.
- * Инкапсулирует работу с AmuletBleManager и BleScanner.
+ * Инкапсулирует работу с AmuletDevice и BleScanner.
  */
 interface DevicesBleDataSource {
     

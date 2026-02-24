@@ -1,7 +1,7 @@
 package com.example.amulet.data.devices.datasource.ble
 
 import android.util.Base64
-import com.example.amulet.core.ble.AmuletBleManager
+import com.example.amulet.core.ble.AmuletDevice
 import com.example.amulet.core.ble.model.FirmwareInfo
 import com.example.amulet.core.ble.model.OtaProgress
 import com.example.amulet.shared.domain.devices.model.AmuletCommand
@@ -13,11 +13,11 @@ import javax.inject.Inject
  * Реализация источника данных для OTA обновлений через BLE.
  */
 class OtaBleDataSourceImpl @Inject constructor(
-    private val bleManager: AmuletBleManager
+    private val bleDevice: AmuletDevice
 ) : OtaBleDataSource {
     
-    override fun startBleOtaUpdate(firmwareInfo: FirmwareInfo): Flow<OtaProgress> {
-        return bleManager.startOtaUpdate(firmwareInfo)
+    override fun startBleOtaUpdate(firmwareData: ByteArray, firmwareInfo: FirmwareInfo): Flow<OtaProgress> {
+        return bleDevice.startOtaUpdate(firmwareData, firmwareInfo)
     }
     
     override fun startWifiOtaUpdate(
@@ -25,7 +25,7 @@ class OtaBleDataSourceImpl @Inject constructor(
         password: String,
         firmwareInfo: FirmwareInfo
     ): Flow<OtaProgress> {
-        return bleManager.startWifiOtaUpdate(firmwareInfo)
+        return bleDevice.startWifiOtaUpdate(firmwareInfo)
             .onStart {
                 // Настроить Wi-Fi перед запуском OTA
                 val ssidBase64 = Base64.encodeToString(
@@ -38,7 +38,7 @@ class OtaBleDataSourceImpl @Inject constructor(
                 )
                 
                 val wifiCommand = AmuletCommand.SetWifiCred(ssidBase64, passwordBase64)
-                bleManager.sendCommand(wifiCommand)
+                bleDevice.sendCommand(wifiCommand)
             }
     }
 }

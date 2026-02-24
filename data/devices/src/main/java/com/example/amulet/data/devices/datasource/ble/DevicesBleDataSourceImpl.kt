@@ -1,6 +1,6 @@
 package com.example.amulet.data.devices.datasource.ble
 
-import com.example.amulet.core.ble.AmuletBleManager
+import com.example.amulet.core.ble.AmuletDevice
 import com.example.amulet.core.ble.model.BleResult
 import com.example.amulet.core.ble.model.ConnectionState
 import com.example.amulet.core.ble.model.DeviceStatus
@@ -25,7 +25,7 @@ import javax.inject.Inject
  * Реализация источника данных для работы с устройствами через BLE.
  */
 class DevicesBleDataSourceImpl @Inject constructor(
-    private val bleManager: AmuletBleManager,
+    private val bleDevice: AmuletDevice,
     private val bleScanner: BleScanner
 ) : DevicesBleDataSource {
     
@@ -42,11 +42,11 @@ class DevicesBleDataSourceImpl @Inject constructor(
     ): AppResult<Unit> {
         return try {
             Logger.d("DevicesBleDataSourceImpl.connect: start deviceAddress=${'$'}deviceAddress autoReconnect=${'$'}autoReconnect", tag = TAG)
-            bleManager.connect(deviceAddress, autoReconnect)
+            bleDevice.connect(deviceAddress, autoReconnect)
             try {
                 Logger.d("DevicesBleDataSourceImpl.connect: performing soft handshake after connect (with small delay)", tag = TAG)
                 delay(2000)
-                bleManager.getProtocolVersion()
+                bleDevice.getProtocolVersion()
             } catch (e: Exception) {
                 Logger.d("DevicesBleDataSourceImpl.connect: soft handshake failed, ignoring: ${'$'}e", tag = TAG)
             }
@@ -60,7 +60,7 @@ class DevicesBleDataSourceImpl @Inject constructor(
     
     override suspend fun disconnect(): AppResult<Unit> {
         return try {
-            bleManager.disconnect()
+            bleDevice.disconnect()
             Ok(Unit)
         } catch (e: Exception) {
             Err(mapBleException(e))
@@ -68,24 +68,24 @@ class DevicesBleDataSourceImpl @Inject constructor(
     }
     
     override fun observeConnectionState(): Flow<ConnectionState> {
-        return bleManager.connectionState
+        return bleDevice.connectionState
     }
     
     override fun observeBatteryLevel(): Flow<Int> {
-        return bleManager.batteryLevel.onEach { level ->
+        return bleDevice.batteryLevel.onEach { level ->
             Logger.d("observeBatteryLevel: level=$level", tag = TAG)
         }
     }
     
     override fun observeDeviceStatus(): Flow<DeviceStatus?> {
-        return bleManager.deviceStatus.onEach { status ->
-            Logger.d("observeDeviceStatus: from bleManager status=$status", tag = TAG)
+        return bleDevice.deviceStatus.onEach { status ->
+            Logger.d("observeDeviceStatus: from bleDevice status=$status", tag = TAG)
         }
     }
     
     override suspend fun getProtocolVersion(): AppResult<String?> {
         return try {
-            val version = bleManager.getProtocolVersion()
+            val version = bleDevice.getProtocolVersion()
             Ok(version)
         } catch (e: Exception) {
             Err(mapBleException(e))
@@ -93,7 +93,7 @@ class DevicesBleDataSourceImpl @Inject constructor(
     }
 
     override fun observeNotifications(type: NotificationType?): Flow<String> {
-        return bleManager.observeNotifications(type)
+        return bleDevice.observeNotifications(type)
     }
 
     override fun uploadAnimation(plan: AnimationPlan): Flow<UploadProgress> {
@@ -101,7 +101,7 @@ class DevicesBleDataSourceImpl @Inject constructor(
             "uploadAnimation: planId=${plan.id} payloadBytes=${plan.payload.size} duration=${plan.totalDurationMs}",
             tag = TAG
         )
-        return bleManager.uploadAnimation(plan)
+        return bleDevice.uploadAnimation(plan)
             .onEach { progress ->
                 Logger.d("uploadAnimation: progress=$progress", tag = TAG)
             }
@@ -113,7 +113,7 @@ class DevicesBleDataSourceImpl @Inject constructor(
     override suspend fun sendCommand(command: AmuletCommand): AppResult<Unit> {
         return try {
             Logger.d("DevicesBleDataSourceImpl.sendCommand: command=$command", tag = TAG)
-            when (val result = bleManager.sendCommand(command)) {
+            when (val result = bleDevice.sendCommand(command)) {
                 is BleResult.Success -> Ok(Unit)
                 is BleResult.Error -> {
                     val error: AppError = if (result.code == "TIMEOUT") {

@@ -1,6 +1,7 @@
 package com.example.amulet.core.ble.model
 
 import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import android.util.Base64
 
 /**
  * Extension функции для преобразования доменных команд в BLE протокол.
@@ -26,4 +27,8 @@ fun AmuletCommand.toCommandString(): String = when (this) {
     is AmuletCommand.WifiOtaStart -> "WIFI_OTA_START:$url:$version:$checksum"
     is AmuletCommand.GetProtocolVersion -> "GET_PROTOCOL_VERSION"
     is AmuletCommand.Custom -> if (parameters.isEmpty()) command else "$command:${parameters.joinToString(":")}" 
+}
+
+fun ByteArray.toBase64(): String {
+    return Base64.encodeToString(this, Base64.NO_WRAP)
 }

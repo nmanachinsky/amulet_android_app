@@ -14,7 +14,7 @@ import com.example.amulet.core.ble.model.OtaProgress
 import com.example.amulet.core.ble.model.UploadProgress
 import com.example.amulet.core.ble.service.AnimationUploadService
 import com.example.amulet.core.ble.service.OtaUpdateService
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import com.example.amulet.core.ble.model.AmuletCommand
 import com.example.amulet.shared.domain.devices.model.NotificationType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

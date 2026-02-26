@@ -3,13 +3,13 @@ package com.example.amulet.shared.domain.devices.usecase
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.domain.devices.model.Device
 import com.example.amulet.shared.domain.devices.model.DeviceId
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
 
 /**
  * UseCase для обновления настроек устройства.
  */
 class UpdateDeviceSettingsUseCase(
-    private val devicesRepository: DevicesRepository
+    private val deviceRegistryRepository: DeviceRegistryRepository
 ) {
     suspend operator fun invoke(
         deviceId: DeviceId,
@@ -18,7 +18,7 @@ class UpdateDeviceSettingsUseCase(
         haptics: Double? = null,
         gestures: Map<String, String>? = null
     ): AppResult<Device> {
-        return devicesRepository.updateDeviceSettings(
+        return deviceRegistryRepository.updateDeviceSettings(
             deviceId = deviceId,
             name = name,
             brightness = brightness,

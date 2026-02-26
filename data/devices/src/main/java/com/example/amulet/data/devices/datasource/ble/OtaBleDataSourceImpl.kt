@@ -4,7 +4,7 @@ import android.util.Base64
 import com.example.amulet.core.ble.AmuletDevice
 import com.example.amulet.core.ble.model.FirmwareInfo
 import com.example.amulet.core.ble.model.OtaProgress
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import com.example.amulet.core.ble.model.AmuletCommand
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject

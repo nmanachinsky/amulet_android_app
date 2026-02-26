@@ -6,7 +6,8 @@ import com.example.amulet.shared.domain.hugs.model.HugId
 import com.example.amulet.shared.domain.hugs.model.HugStatus
 import com.example.amulet.shared.domain.hugs.model.RemoteHugCommand
 import com.example.amulet.shared.domain.hugs.model.PairMemberSettings
-import com.example.amulet.shared.domain.patterns.PatternPlaybackService
+import com.example.amulet.shared.domain.playback.DevicePlaybackEngine
+import com.example.amulet.shared.domain.playback.PlayableMedia
 import com.example.amulet.shared.domain.patterns.usecase.GetPatternByIdUseCase
 import com.example.amulet.shared.domain.patterns.usecase.EnsurePatternLoadedUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetUserPreferencesStreamUseCase
@@ -22,15 +23,10 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-/**
- * UseCase, который принимает команду удалённого «объятия»
- * и отвечает за фактическое воспроизведение паттерна на амулете
- * и обновление статуса объятия как доставленного.
- */
 @OptIn(ExperimentalTime::class)
 class ExecuteRemoteHugCommandUseCase(
     private val getPatternById: GetPatternByIdUseCase,
-    private val playbackService: PatternPlaybackService,
+    private val playbackEngine: DevicePlaybackEngine,
     private val updateHugStatus: UpdateHugStatusUseCase,
     private val ensurePatternLoaded: EnsurePatternLoadedUseCase,
     private val pairsRepository: PairsRepository,
@@ -92,10 +88,8 @@ class ExecuteRemoteHugCommandUseCase(
             tag = "ExecuteRemoteHugCommandUseCase"
         )
 
-        val playbackResult = playbackService.playOnConnectedDevice(
-            spec = pattern.spec,
-            intensity = intensity,
-            isPreview = true,
+        val playbackResult = playbackEngine.play(
+            PlayableMedia.Preview(pattern.spec, intensity)
         )
 
         playbackResult.onSuccess {

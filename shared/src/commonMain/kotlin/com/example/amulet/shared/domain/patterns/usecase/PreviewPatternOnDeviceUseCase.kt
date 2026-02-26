@@ -1,63 +1,16 @@
 package com.example.amulet.shared.domain.patterns.usecase
 
-import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.domain.devices.model.DeviceId
-import com.example.amulet.shared.domain.patterns.PatternPlaybackService
+import com.example.amulet.shared.domain.playback.DevicePlaybackEngine
+import com.example.amulet.shared.domain.playback.PlayableMedia
+import com.example.amulet.shared.domain.playback.PlaybackState
 import com.example.amulet.shared.domain.patterns.model.PatternSpec
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.collect
 
-/**
- * UseCase для предпросмотра паттерна на реальном устройстве.
- */
 class PreviewPatternOnDeviceUseCase(
-    private val playbackService: PatternPlaybackService
+    private val engine: DevicePlaybackEngine
 ) {
-    suspend operator fun invoke(
-        spec: PatternSpec,
-        deviceId: DeviceId
-    ): Flow<PreviewProgress> = flow {
-        Logger.d(
-            "invoke: start preview specType=${spec.type} deviceId=$deviceId",
-            tag = TAG
-        )
-        emit(PreviewProgress.Compiling)
-        try {
-            // Через сервис воспроизведения паттернов
-            val result = playbackService.playOnDevice(
-                spec = spec,
-                deviceId = deviceId,
-                intensity = 1.0,
-                isPreview = true,
-            )
-            result
-                .onSuccess {
-                    Logger.d("invoke: playbackService.playOnDevice success", tag = TAG)
-                    emit(PreviewProgress.Playing)
-                    Logger.d("invoke: PreviewProgress.Playing emitted", tag = TAG)
-                }
-                .onFailure { error ->
-                    Logger.d("invoke: playbackService.playOnDevice failure error=$error", tag = TAG)
-                    emit(PreviewProgress.Failed(Exception("Pattern playback failed: $error")))
-                }
-        } catch (e: Exception) {
-            Logger.d("invoke: exception $e", tag = TAG)
-            emit(PreviewProgress.Failed(e))
-        }
+    suspend operator fun invoke(spec: PatternSpec): Flow<PlaybackState> {
+        engine.play(PlayableMedia.Preview(spec, 1.0))
+        return engine.playbackState
     }
 }
-
-/**
- * Прогресс предпросмотра паттерна.
- */
-sealed interface PreviewProgress {
-    data object Compiling : PreviewProgress
-    data class Uploading(val percent: Int) : PreviewProgress
-    data object Playing : PreviewProgress
-    data class Failed(val cause: Throwable?) : PreviewProgress
-}
-
-private const val TAG = "PreviewPatternOnDeviceUseCase"

@@ -11,7 +11,6 @@ import com.example.amulet.shared.domain.auth.usecase.SignInUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignInWithGoogleUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignUpUseCase
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
 import com.example.amulet.shared.domain.devices.repository.OtaRepository
 import com.example.amulet.shared.domain.devices.usecase.*
 import com.example.amulet.shared.domain.hugs.HugsRepository
@@ -130,8 +129,6 @@ object KoinBridgeModule {
         application: Application,
         authRepository: AuthRepository,
         userRepository: UserRepository,
-        devicesRepository: DevicesRepository,
-        otaRepository: OtaRepository,
         hugsRepository: HugsRepository,
         pairsRepository: PairsRepository,
         patternsRepository: PatternsRepository,
@@ -147,8 +144,6 @@ object KoinBridgeModule {
             val bridgeModule = module {
                 single<AuthRepository> { authRepository }
                 single<UserRepository> { userRepository }
-                single<DevicesRepository> { devicesRepository }
-                single<OtaRepository> { otaRepository }
                 single<HugsRepository> { hugsRepository }
                 single<PairsRepository> { pairsRepository }
                 single<PatternsRepository> { patternsRepository }

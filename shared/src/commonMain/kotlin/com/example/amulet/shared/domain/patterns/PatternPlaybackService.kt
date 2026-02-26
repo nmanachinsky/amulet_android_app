@@ -3,11 +3,11 @@ package com.example.amulet.shared.domain.patterns
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
 import com.example.amulet.shared.domain.devices.model.DeviceAnimationPlan
 import com.example.amulet.shared.domain.devices.model.DeviceId
 import com.example.amulet.shared.domain.devices.model.NotificationType
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
 import com.example.amulet.shared.domain.devices.usecase.ObserveConnectedDeviceStatusUseCase
 import com.example.amulet.shared.domain.patterns.compiler.DeviceTimelineCompiler
 import com.example.amulet.shared.domain.patterns.model.PatternId
@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
@@ -34,7 +33,8 @@ import kotlinx.coroutines.delay
  */
 class PatternPlaybackService(
     private val deviceTimelineCompiler: DeviceTimelineCompiler,
-    private val devicesRepository: DevicesRepository,
+    private val deviceControlRepository: DeviceControlRepository,
+    private val deviceRegistryRepository: DeviceRegistryRepository,
     private val observeConnectedDeviceStatus: ObserveConnectedDeviceStatusUseCase,
     private val getPatternById: GetPatternByIdUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -51,15 +51,13 @@ class PatternPlaybackService(
     ): AppResult<Unit> = withContext(dispatcher) {
         try {
             Logger.d("playOnDevice: start deviceId=$deviceId specType=${spec.type} intensity=$intensity", tag = TAG)
-            val deviceResult = devicesRepository.getDevice(deviceId)
+            val deviceResult = deviceRegistryRepository.getDevice(deviceId)
             deviceResult.fold(
                 success = { device ->
                     Logger.d("playOnDevice: device loaded deviceId=${device.id.value} hw=${device.hardwareVersion} fw=${device.firmwareVersion}", tag = TAG)
 
-                    // 1. Берём канонический таймлайн прямо из PatternSpec
                     val timeline = spec.timeline
 
-                    // 2. Device компилятор: PatternTimeline -> DeviceTimelineSegment
                     val segments = deviceTimelineCompiler.compile(
                         timeline = timeline,
                         hardwareVersion = device.hardwareVersion,
@@ -67,7 +65,6 @@ class PatternPlaybackService(
                         intensity = intensity
                     )
 
-                    // 3. Собираем DeviceAnimationPlan с готовыми байтовыми сегментами
                     val planId = if (isPreview) {
                         "preview-${System.currentTimeMillis()}"
                     } else {
@@ -76,7 +73,7 @@ class PatternPlaybackService(
                     val devicePlan = DeviceAnimationPlan(
                         id = planId,
                         totalDurationMs = timeline.durationMs.toLong(),
-                        segments = segments.map { it.toByteArray() },
+                        segments = segments,
                         isPreview = isPreview
                     )
 
@@ -86,7 +83,7 @@ class PatternPlaybackService(
                     )
 
                     var lastProgress: Int? = null
-                    devicesRepository.uploadTimelinePlan(devicePlan, device.hardwareVersion)
+                    deviceControlRepository.uploadTimelinePlan(devicePlan, device.hardwareVersion)
                         .collect { percent ->
                             lastProgress = percent
                         }
@@ -117,10 +114,8 @@ class PatternPlaybackService(
             val status = awaitConnectedDeviceStatus()
                 ?: return@withContext Err(AppError.BleError.DeviceDisconnected)
 
-            // 1. Берём канонический таймлайн прямо из PatternSpec
             val timeline = spec.timeline
 
-            // 2. Device компилятор: PatternTimeline -> DeviceTimelineSegment
             val segments = deviceTimelineCompiler.compile(
                 timeline = timeline,
                 hardwareVersion = status.hardwareVersion,
@@ -128,7 +123,6 @@ class PatternPlaybackService(
                 intensity = intensity
             )
 
-            // 3. План для устройства
             val planId = if (isPreview) {
                 "preview-${System.currentTimeMillis()}"
             } else {
@@ -137,7 +131,7 @@ class PatternPlaybackService(
             val devicePlan = DeviceAnimationPlan(
                 id = planId,
                 totalDurationMs = timeline.durationMs.toLong(),
-                segments = segments.map { it.toByteArray() },
+                segments = segments,
                 isPreview = isPreview
             )
 
@@ -172,7 +166,7 @@ class PatternPlaybackService(
                 val plan = DeviceAnimationPlan(
                     id = pattern.id.value,
                     totalDurationMs = timeline.durationMs.toLong(),
-                    segments = segments.map { it.toByteArray() },
+                    segments = segments,
                 )
                 Logger.d(
                     "preloadPatterns: uploading plan id=${plan.id} segments=${plan.segments.size} duration=${plan.totalDurationMs}",
@@ -205,23 +199,16 @@ class PatternPlaybackService(
 
         return@withContext try {
             val hasPlanOnDevice = try {
-                val result = devicesRepository.sendCommand(
-                    AmuletCommand.HasPlan(patternId = planId)
-                )
-                var exists = false
-                result.fold(
-                    success = { exists = true },
-                    failure = { }
-                )
-                exists
+                val result = deviceControlRepository.hasPattern(planId)
+                result.isOk
             } catch (e: Exception) {
-                Logger.d("preloadTimelinePlan: HAS_PLAN command failed, fallback to upload error=${'$'}e", tag = TAG)
+                Logger.d("preloadTimelinePlan: HAS_PLAN command failed, fallback to upload error=$e", tag = TAG)
                 false
             }
 
             if (hasPlanOnDevice) {
                 Logger.d(
-                    "preloadTimelinePlan: plan already exists on device, skipping upload id=${'$'}planId",
+                    "preloadTimelinePlan: plan already exists on device, skipping upload id=$planId",
                     tag = TAG
                 )
                 return@withContext Ok(Unit)
@@ -238,10 +225,10 @@ class PatternPlaybackService(
             val plan = DeviceAnimationPlan(
                 id = planId,
                 totalDurationMs = totalDurationMs,
-                segments = segments.map { it.toByteArray() },
+                segments = segments,
             )
             Logger.d(
-                "preloadTimelinePlan: uploading plan id=${'$'}planId segments=${'$'}{plan.segments.size} duration=${'$'}{plan.totalDurationMs}",
+                "preloadTimelinePlan: uploading plan id=$planId segments=${plan.segments.size} duration=${plan.totalDurationMs}",
                 tag = TAG
             )
             uploadPlanWithRetry(plan, status.hardwareVersion)
@@ -258,12 +245,12 @@ class PatternPlaybackService(
         patternId: PatternId,
         timeoutMs: Long = DEFAULT_PLAY_TIMEOUT_MS,
     ): AppResult<Unit> = withContext(dispatcher) {
-        val commandResult = devicesRepository.sendCommand(AmuletCommand.Play(patternId.value))
+        val commandResult = deviceControlRepository.playPattern(patternId.value)
         commandResult.fold(
             success = {
                 try {
                     withTimeout(timeoutMs) {
-                        devicesRepository.observeNotifications(NotificationType.PATTERN)
+                        deviceControlRepository.observeNotifications(NotificationType.PATTERN)
                             .first { it.startsWith("NOTIFY:PATTERN:STARTED:${patternId.value}") }
                     }
                     Ok(Unit)
@@ -284,7 +271,7 @@ class PatternPlaybackService(
      * Наблюдать завершение анимации (NOTIFY:ANIMATION:COMPLETE).
      */
     fun observeAnimationComplete(patternId: PatternId? = null): Flow<String> {
-        val baseFlow = devicesRepository.observeNotifications(NotificationType.ANIMATION)
+        val baseFlow = deviceControlRepository.observeNotifications(NotificationType.ANIMATION)
             .mapNotNull { message ->
                 if (message.startsWith("NOTIFY:ANIMATION:COMPLETE:")) {
                     message.substringAfterLast(":")
@@ -302,8 +289,7 @@ class PatternPlaybackService(
             val status = awaitConnectedDeviceStatus()
                 ?: return@withContext Err(AppError.BleError.DeviceDisconnected)
 
-            // Отправляем одиночную команду ClearAll через репозиторий устройств.
-            devicesRepository.sendCommand(AmuletCommand.ClearAll)
+            deviceControlRepository.clearDevice()
         } catch (e: Exception) {
             Logger.d("clearCurrentDevice: exception $e", tag = TAG)
             Err(AppError.Unknown)
@@ -333,7 +319,7 @@ class PatternPlaybackService(
         while (attempt < maxAttempts) {
             try {
                 var lastProgress: Int? = null
-                devicesRepository.uploadTimelinePlan(plan, hardwareVersion)
+                deviceControlRepository.uploadTimelinePlan(plan, hardwareVersion)
                     .collect { percent -> lastProgress = percent }
                 Logger.d(
                     "uploadPlanWithRetry: success on attempt=${attempt + 1}, lastProgress=$lastProgress",

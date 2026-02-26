@@ -10,7 +10,7 @@ import com.example.amulet.core.ble.model.OtaState
 import com.example.amulet.core.ble.model.toBase64
 import com.example.amulet.core.ble.model.toCommandString
 import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import com.example.amulet.core.ble.model.AmuletCommand
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject

@@ -8,7 +8,7 @@ import com.example.amulet.core.ble.model.toCommandString
 import com.example.amulet.core.ble.protocol.AmuletProtocolParser
 import com.example.amulet.core.ble.transport.BleGattClient
 import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import com.example.amulet.core.ble.model.AmuletCommand
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.StateFlow

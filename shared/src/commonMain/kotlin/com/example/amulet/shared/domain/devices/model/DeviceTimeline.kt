@@ -81,12 +81,12 @@ data class DeviceTimelineSegment(
 }
 
 /**
- * План анимации для устройства на уровне бинарных сегментов.
- * Используется как доменный контракт для BLE-слоя.
+ * План анимации для устройства на уровне сегментов таймлайна.
+ * Используется как доменный контракт. Склейка в байты происходит в Data-слое.
  */
 data class DeviceAnimationPlan(
     val id: String,
     val totalDurationMs: Long,
-    val segments: List<ByteArray>,
+    val segments: List<DeviceTimelineSegment>,
     val isPreview: Boolean = false
 )

@@ -1,7 +1,7 @@
 package com.example.amulet.shared.domain.devices.usecase
 
 import com.example.amulet.shared.domain.devices.model.ScannedAmulet
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceConnectionRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
  * Возвращает поток списков всех найденных устройств.
  */
 class ScanForDevicesUseCase(
-    private val devicesRepository: DevicesRepository
+    private val deviceConnectionRepository: DeviceConnectionRepository
 ) {
     operator fun invoke(timeoutMs: Long = 30_000L): Flow<List<ScannedAmulet>> {
-        return devicesRepository.scanForDevices(timeoutMs)
+        return deviceConnectionRepository.scanForDevices(timeoutMs)
     }
 }

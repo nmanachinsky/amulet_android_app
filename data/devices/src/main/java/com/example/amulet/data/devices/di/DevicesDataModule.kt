@@ -10,9 +10,13 @@ import com.example.amulet.data.devices.datasource.local.OtaLocalDataSource
 import com.example.amulet.data.devices.datasource.local.OtaLocalDataSourceImpl
 import com.example.amulet.data.devices.datasource.remote.OtaRemoteDataSource
 import com.example.amulet.data.devices.datasource.remote.OtaRemoteDataSourceImpl
-import com.example.amulet.data.devices.repository.DevicesRepositoryImpl
+import com.example.amulet.data.devices.repository.DeviceConnectionRepositoryImpl
+import com.example.amulet.data.devices.repository.DeviceControlRepositoryImpl
+import com.example.amulet.data.devices.repository.DeviceRegistryRepositoryImpl
 import com.example.amulet.data.devices.repository.OtaRepositoryImpl
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceConnectionRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
 import com.example.amulet.shared.domain.devices.repository.OtaRepository
 import dagger.Binds
 import dagger.Module
@@ -32,7 +36,15 @@ interface DevicesDataModule {
     
     @Binds
     @Singleton
-    fun bindDevicesRepository(impl: DevicesRepositoryImpl): DevicesRepository
+    fun bindDeviceRegistryRepository(impl: DeviceRegistryRepositoryImpl): DeviceRegistryRepository
+    
+    @Binds
+    @Singleton
+    fun bindDeviceConnectionRepository(impl: DeviceConnectionRepositoryImpl): DeviceConnectionRepository
+    
+    @Binds
+    @Singleton
+    fun bindDeviceControlRepository(impl: DeviceControlRepositoryImpl): DeviceControlRepository
     
     @Binds
     @Singleton

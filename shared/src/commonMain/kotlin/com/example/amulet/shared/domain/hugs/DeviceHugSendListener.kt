@@ -1,7 +1,7 @@
 package com.example.amulet.shared.domain.hugs
 
 import com.example.amulet.shared.domain.devices.model.NotificationType
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
 import com.example.amulet.shared.domain.hugs.model.GestureType
 import com.example.amulet.shared.domain.hugs.model.PairStatus
 import com.example.amulet.shared.domain.hugs.model.PairId
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class DeviceHugSendListener(
-    private val devicesRepository: DevicesRepository,
+    private val deviceControlRepository: DeviceControlRepository,
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val observePairsUseCase: ObservePairsUseCase,
     private val sendQuickReplyByGestureUseCase: SendQuickReplyByGestureUseCase,
@@ -26,13 +26,12 @@ class DeviceHugSendListener(
 
     init {
         scope.launch {
-            devicesRepository.observeNotifications(NotificationType.STATUS)
+            deviceControlRepository.observeNotifications(NotificationType.STATUS)
                 .collect { message ->
                     if (message == "NOTIFY:STATUS:HUG_SEND") {
                         try {
                             handleHugSend()
                         } catch (_: Throwable) {
-                            // Ошибки при обработке уведомления не должны ронять слушатель.
                         }
                     }
                 }

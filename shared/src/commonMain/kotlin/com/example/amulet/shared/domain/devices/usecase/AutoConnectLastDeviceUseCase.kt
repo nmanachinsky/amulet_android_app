@@ -3,11 +3,14 @@ package com.example.amulet.shared.domain.devices.usecase
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.example.amulet.shared.domain.devices.model.BleConnectionState
-import com.example.amulet.shared.domain.devices.repository.DevicesRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceConnectionRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
 import kotlinx.coroutines.flow.first
 
+
 class AutoConnectLastDeviceUseCase(
-    private val devicesRepository: DevicesRepository,
+    private val deviceRegistryRepository: DeviceRegistryRepository,
+    private val deviceConnectionRepository: DeviceConnectionRepository,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase
 ) {
     suspend operator fun invoke() {
@@ -21,7 +24,7 @@ class AutoConnectLastDeviceUseCase(
         val userId = result.component1()!!
         
         val lastUsed = try {
-            devicesRepository.getLastConnectedDevice(userId)
+            deviceRegistryRepository.getLastConnectedDevice(userId)
         } catch (e: Exception) {
             Logger.e("AutoConnect: failed to get last connected device: $e", tag = TAG)
             null
@@ -35,7 +38,7 @@ class AutoConnectLastDeviceUseCase(
         Logger.d("AutoConnect: last device id=${lastUsed.id.value} ble=${lastUsed.bleAddress}", tag = TAG)
 
         try {
-            val flow = devicesRepository.connectToDevice(userId, lastUsed.bleAddress)
+            val flow = deviceConnectionRepository.connectToDevice(userId, lastUsed.bleAddress)
             flow.first { state ->
                 when (state) {
                     is BleConnectionState.Connected -> {

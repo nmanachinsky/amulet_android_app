@@ -22,6 +22,14 @@ interface OtaRemoteDataSource {
     ): AppResult<FirmwareInfoDto?>
     
     /**
+     * Скачать прошивку по URL.
+     *
+     * @param url URL для скачивания прошивки
+     * @return ByteArray с данными прошивки
+     */
+    suspend fun downloadFirmware(url: String): AppResult<ByteArray>
+    
+    /**
      * Отправить отчет об установке прошивки.
      *
      * @param deviceId ID устройства

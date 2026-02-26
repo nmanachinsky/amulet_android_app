@@ -135,7 +135,7 @@ private val sharedModule = module {
     factory { UpdateDeviceSettingsUseCase(get()) }
     factory { ApplyDeviceBrightnessUseCase(get()) }
     factory { ApplyDeviceHapticsUseCase(get()) }
-    factory { AutoConnectLastDeviceUseCase(get(), get()) }
+    factory { AutoConnectLastDeviceUseCase(get(), get(), get()) }
 
     // OTA UseCases
     factory { CheckFirmwareUpdateUseCase(get()) }
@@ -145,7 +145,7 @@ private val sharedModule = module {
     
     // Patterns playback (PatternTimeline -> DeviceTimelineSegment -> DeviceAnimationPlan)
     single<DeviceTimelineCompiler> { DeviceTimelineCompilerImpl() }
-    single { PatternPlaybackService(get(), get(), get(), get()) }
+    single { PatternPlaybackService(get(), get(), get(), get(), get(), get()) }
     
     // Patterns UseCases
     factory { PatternValidator() }

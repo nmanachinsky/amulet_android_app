@@ -11,7 +11,7 @@ import com.example.amulet.core.ble.scanner.ScannedDevice
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
 import com.example.amulet.shared.core.logging.Logger
-import com.example.amulet.shared.domain.devices.model.AmuletCommand
+import com.example.amulet.core.ble.model.AmuletCommand
 import com.example.amulet.shared.domain.devices.model.NotificationType
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok

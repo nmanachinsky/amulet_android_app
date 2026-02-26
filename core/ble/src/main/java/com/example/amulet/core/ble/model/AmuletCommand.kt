@@ -1,19 +1,15 @@
-package com.example.amulet.shared.domain.devices.model
+package com.example.amulet.core.ble.model
 
-/**
- * Команды для управления амулетом.
- * Это доменная модель, не зависящая от BLE протокола.
- * Преобразование в BLE строки происходит в :core:ble модуле.
- */
+import android.util.Base64
+
 sealed interface AmuletCommand {
     
-    // Управление светодиодами (низкоуровневые команды)
     data class SetRing(
-        val colors: List<Rgb> // 8 элементов
+        val colors: List<Rgb>
     ) : AmuletCommand
     
     data class SetLed(
-        val index: Int, // 0-7
+        val index: Int,
         val color: Rgb
     ) : AmuletCommand
     
@@ -23,7 +19,6 @@ sealed interface AmuletCommand {
         val durationMs: Int
     ) : AmuletCommand
     
-    // Встроенные анимации (идентификатор паттерна на устройстве)
     data class Play(
         val patternId: String
     ) : AmuletCommand
@@ -32,7 +27,6 @@ sealed interface AmuletCommand {
         val patternId: String
     ) : AmuletCommand
     
-    // Скрипты практик (PRACTICE_SCRIPT)
     data class BeginPracticeScript(
         val practiceId: String
     ) : AmuletCommand
@@ -55,7 +49,6 @@ sealed interface AmuletCommand {
         val practiceId: String
     ) : AmuletCommand
     
-    // Wi-Fi OTA команды
     data class SetWifiCred(
         val ssidBase64: String,
         val passwordBase64: String
@@ -67,10 +60,8 @@ sealed interface AmuletCommand {
         val checksum: String
     ) : AmuletCommand
     
-    // Версия протокола
     data object GetProtocolVersion : AmuletCommand
     
-    // Произвольная команда
     data class Custom(
         val command: String,
         val parameters: List<String> = emptyList()
@@ -103,3 +94,29 @@ data class Rgb(
         }
     }
 }
+
+fun AmuletCommand.toCommandString(): String = when (this) {
+    is AmuletCommand.SetRing -> {
+        val colorsStr = colors.joinToString(",") { "${it.red},${it.green},${it.blue}" }
+        "SET_RING:$colorsStr"
+    }
+    is AmuletCommand.SetLed -> "SET_LED:${index},${color.red},${color.green},${color.blue}"
+    is AmuletCommand.ClearAll -> "CLEAR_ALL"
+    is AmuletCommand.Delay -> "DELAY:$durationMs"
+    is AmuletCommand.Play -> "PLAY:$patternId"
+    is AmuletCommand.HasPlan -> "HAS_PLAN:$patternId"
+    is AmuletCommand.BeginPracticeScript -> "BEGIN_PRACTICE_SCRIPT:$practiceId"
+    is AmuletCommand.AddPracticeStep -> "ADD_PRACTICE_STEP:$practiceId,$order,$patternId"
+    is AmuletCommand.CommitPracticeScript -> "COMMIT_PRACTICE_SCRIPT:$practiceId"
+    is AmuletCommand.HasPracticeScript -> "HAS_PRACTICE_SCRIPT:$practiceId"
+    is AmuletCommand.PlayPracticeScript -> "PLAY_PRACTICE_SCRIPT:$practiceId"
+    is AmuletCommand.SetWifiCred -> "SET_WIFI_CRED:$ssidBase64,$passwordBase64"
+    is AmuletCommand.WifiOtaStart -> "WIFI_OTA_START:$url,$version,$checksum"
+    is AmuletCommand.GetProtocolVersion -> "GET_PROTOCOL_VERSION"
+    is AmuletCommand.Custom -> {
+        if (parameters.isEmpty()) command
+        else "$command:${parameters.joinToString(",")}"
+    }
+}
+
+fun ByteArray.toBase64(): String = Base64.encodeToString(this, Base64.NO_WRAP)

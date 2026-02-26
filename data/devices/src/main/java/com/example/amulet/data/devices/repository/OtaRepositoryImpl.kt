@@ -35,18 +35,15 @@ class OtaRepositoryImpl @Inject constructor(
 ) : OtaRepository {
     
     override suspend fun checkFirmwareUpdate(deviceId: DeviceId): AppResult<FirmwareUpdate?> {
-        // Получаем информацию об устройстве из БД
         val device = devicesLocalDataSource.getDeviceById(deviceId.value)
             ?: return Err(AppError.NotFound)
         
         val hardwareVersion = device.hardwareVersion
         val currentFirmware = device.firmwareVersion ?: "0.0.0"
         
-        // Проверяем обновление на сервере
         return remoteDataSource.checkFirmwareUpdate(hardwareVersion, currentFirmware)
             .andThen { firmwareDto ->
                 if (firmwareDto != null) {
-                    // Кэшируем информацию о прошивке
                     val entity = otaMapper.toEntity(firmwareDto, hardwareVersion)
                     localDataSource.upsertFirmware(entity)
                     Ok(otaMapper.toDomain(firmwareDto))
@@ -60,16 +57,32 @@ class OtaRepositoryImpl @Inject constructor(
         deviceId: DeviceId,
         firmwareUpdate: FirmwareUpdate
     ): Flow<OtaUpdateProgress> {
-        val firmwareInfo = FirmwareInfo(
-            version = firmwareUpdate.version,
-            url = firmwareUpdate.url,
-            checksum = firmwareUpdate.checksum,
-            size = firmwareUpdate.size,
-            hardwareVersion = 0 // Будет определен из контекста устройства
-        )
-        
-        return bleDataSource.startBleOtaUpdate(firmwareInfo).map { progress ->
-            mapOtaProgress(progress.state, progress.percent, progress.sentBytes, progress.totalBytes)
+        return kotlinx.coroutines.flow.flow {
+            emit(OtaUpdateProgress(OtaUpdateState.PREPARING, 0, 0, firmwareUpdate.size, null))
+            
+            val downloadResult = remoteDataSource.downloadFirmware(firmwareUpdate.url)
+            val error = downloadResult.component2()
+            if (error != null) {
+                val errorMessage = when (error) {
+                    is AppError.Server -> error.message ?: "Server error"
+                    else -> error.toString()
+                }
+                emit(OtaUpdateProgress(OtaUpdateState.FAILED, 0, 0, 0, errorMessage))
+                return@flow
+            }
+            val firmwareData = downloadResult.component1()!!
+            
+            val firmwareInfo = FirmwareInfo(
+                version = firmwareUpdate.version,
+                url = firmwareUpdate.url,
+                checksum = firmwareUpdate.checksum,
+                size = firmwareData.size.toLong(),
+                hardwareVersion = 0
+            )
+            
+            bleDataSource.startBleOtaUpdate(firmwareData, firmwareInfo).collect { progress ->
+                emit(mapOtaProgress(progress.state, progress.percent, progress.sentBytes, progress.totalBytes))
+            }
         }
     }
     
@@ -115,9 +128,6 @@ class OtaRepositoryImpl @Inject constructor(
         return Ok(Unit)
     }
     
-    /**
-     * Маппинг прогресса OTA из BLE в доменную модель.
-     */
     private fun mapOtaProgress(
         state: OtaState,
         percent: Int,

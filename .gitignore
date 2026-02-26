@@ -141,12 +141,13 @@ detekt-rules/.gradle/
 # .github/
 
 # Generated documentation
-PROJECT_CODE.md
-generate_code_doc.py
+.windsurf/
+
+
 
 # Export scripts and results
 export_uncommitted_files.py
 uncommitted_files.md
 docs/openapi_v1.txt
 gradle.properties
-PROJECT_PRACTICE_SUMMARY.md
+scripts/

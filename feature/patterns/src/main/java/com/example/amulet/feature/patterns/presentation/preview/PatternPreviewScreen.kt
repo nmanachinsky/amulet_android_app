@@ -40,7 +40,7 @@ import com.example.amulet.feature.patterns.presentation.components.AmuletAvatar2
 import com.example.amulet.feature.patterns.presentation.components.DeviceConnectionCard
 import com.example.amulet.feature.patterns.presentation.components.PatternInfoCard
 import com.example.amulet.feature.patterns.presentation.components.PlaybackControls
-import com.example.amulet.shared.domain.patterns.usecase.PreviewProgress
+import com.example.amulet.shared.domain.playback.PlaybackState
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -205,25 +205,25 @@ fun PatternPreviewScreen(
         }
 
         // Прогресс отправки на устройство
-        state.progress?.let { progress ->
+        if (state.playbackState != PlaybackState.IDLE) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        when (progress) {
-                            is PreviewProgress.Compiling -> stringResource(R.string.loading_pattern)
-                            is PreviewProgress.Uploading -> stringResource(R.string.sending_to_device) + " ${progress.percent}%"
-                            is PreviewProgress.Playing -> stringResource(R.string.pattern_preview_play)
-                            is PreviewProgress.Failed -> stringResource(R.string.error_device_send_failed)
+                        when (state.playbackState) {
+                            PlaybackState.COMPILING -> stringResource(R.string.loading_pattern)
+                            PlaybackState.UPLOADING -> stringResource(R.string.sending_to_device)
+                            PlaybackState.PLAYING -> stringResource(R.string.pattern_preview_play)
+                            PlaybackState.ERROR -> stringResource(R.string.error_device_send_failed)
+                            PlaybackState.IDLE -> ""
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
                     
-                    if (progress is PreviewProgress.Uploading) {
+                    if (state.playbackState == PlaybackState.UPLOADING) {
                         LinearProgressIndicator(
-                            progress = { progress.percent / 100f },
                             modifier = Modifier.fillMaxWidth(),
                             color = ProgressIndicatorDefaults.linearColor,
                             trackColor = ProgressIndicatorDefaults.linearTrackColor,

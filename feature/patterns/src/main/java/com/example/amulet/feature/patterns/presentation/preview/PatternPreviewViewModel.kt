@@ -11,8 +11,9 @@ import com.example.amulet.shared.domain.patterns.PreviewCache
 import com.example.amulet.shared.domain.patterns.model.PatternId
 import com.example.amulet.shared.domain.patterns.usecase.GetPatternByIdUseCase
 import com.example.amulet.shared.domain.patterns.usecase.PreviewPatternOnDeviceUseCase
-import com.example.amulet.shared.domain.patterns.usecase.PreviewProgress
+import com.example.amulet.shared.domain.playback.PlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -42,6 +43,8 @@ class PatternPreviewViewModel @Inject constructor(
 
     private val _sideEffect = MutableSharedFlow<PatternPreviewSideEffect>()
     val sideEffect: SharedFlow<PatternPreviewSideEffect> = _sideEffect.asSharedFlow()
+
+    private var previewJob: Job? = null
 
     init {
         when {
@@ -140,7 +143,7 @@ class PatternPreviewViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isPlaying = true,
-                progress = null
+                playbackState = PlaybackState.IDLE
             )
         }
     }
@@ -159,54 +162,58 @@ class PatternPreviewViewModel @Inject constructor(
             return
         }
 
-        val device = currentState.selectedDevice
-        if (device == null) {
-            Logger.d("sendToDevice: selectedDevice is null, aborting", tag = TAG)
-            return
-        }
-
         Logger.d(
-            "sendToDevice: starting preview for deviceId=${device.id.value}, patternType=${spec.type}",
+            "sendToDevice: starting preview for patternType=${spec.type}",
             tag = TAG
         )
 
-        viewModelScope.launch {
+        previewJob?.cancel()
+        previewJob = viewModelScope.launch {
             _uiState.update { it.copy(isSendingToDevice = true) }
             Logger.d("sendToDevice: isSendingToDevice set to true", tag = TAG)
 
-            previewPatternOnDeviceUseCase(spec, device.id)
-                .collect { progress ->
-                    Logger.d("sendToDevice: progress=$progress", tag = TAG)
-                    when (progress) {
-                        is PreviewProgress.Compiling -> {
-                            _uiState.update { it.copy(progress = progress) }
-                        }
-                        is PreviewProgress.Uploading -> {
-                            _uiState.update { it.copy(progress = progress) }
-                        }
-                        is PreviewProgress.Playing -> {
-                            _uiState.update { 
+            previewPatternOnDeviceUseCase(spec)
+                .collect { state ->
+                    Logger.d("sendToDevice: state=$state", tag = TAG)
+                    when (state) {
+                        PlaybackState.IDLE -> {
+                            _uiState.update {
                                 it.copy(
-                                    progress = progress, 
+                                    playbackState = state,
+                                    isPlaying = false,
+                                    isSendingToDevice = false
+                                )
+                            }
+                        }
+                        PlaybackState.COMPILING, PlaybackState.UPLOADING -> {
+                            _uiState.update {
+                                it.copy(
+                                    playbackState = state,
+                                    isSendingToDevice = true
+                                )
+                            }
+                        }
+                        PlaybackState.PLAYING -> {
+                            _uiState.update {
+                                it.copy(
+                                    playbackState = state,
                                     isPlaying = true,
                                     isSendingToDevice = false
-                                ) 
+                                )
                             }
                             Logger.d("sendToDevice: pattern successfully sent and playing on device", tag = TAG)
                             _sideEffect.emit(PatternPreviewSideEffect.ShowSnackbar("Паттерн отправлен на устройство"))
                         }
-                        is PreviewProgress.Failed -> {
+                        PlaybackState.ERROR -> {
                             _uiState.update {
                                 it.copy(
+                                    playbackState = state,
                                     isPlaying = false,
-                                    isSendingToDevice = false,
-                                    progress = null
+                                    isSendingToDevice = false
                                 )
                             }
-                            Logger.d("sendToDevice: failed with cause=${progress.cause}", tag = TAG)
-                            progress.cause?.let { error ->
-                                _sideEffect.emit(PatternPreviewSideEffect.ShowSnackbar("Ошибка: ${error.message}"))
-                            }
+                            Logger.d("sendToDevice: failed with state=ERROR", tag = TAG)
+                            _sideEffect.emit(PatternPreviewSideEffect.ShowSnackbar("Ошибка воспроизведения"))
                         }
                     }
                 }

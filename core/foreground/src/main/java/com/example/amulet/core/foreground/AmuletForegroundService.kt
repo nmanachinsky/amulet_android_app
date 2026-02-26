@@ -87,14 +87,12 @@ class AmuletForegroundService : Service(), AmuletForegroundOrchestrator.Host {
         }
 
         override suspend fun previewPattern(patternId: PatternId, deviceId: DeviceId?) {
-            // TODO: вызов PreviewPatternOnDeviceUseCase через PatternPlaybackService
             Logger.d(
                 "previewPattern(patternId=$patternId, deviceId=$deviceId)",
                 tag = TAG,
             )
             val pattern = getPatternByIdUseCase(patternId).firstOrNull() ?: return
-            val targetDeviceId = deviceId ?: return
-            previewPatternOnDeviceUseCase(pattern.spec, targetDeviceId).firstOrNull()
+            previewPatternOnDeviceUseCase(pattern.spec).firstOrNull()
         }
 
         // Объятия пока не поддерживаются из foreground-сервиса.

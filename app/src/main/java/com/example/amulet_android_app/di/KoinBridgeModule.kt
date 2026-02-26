@@ -13,6 +13,7 @@ import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignUpUseCase
 import com.example.amulet.shared.domain.devices.repository.OtaRepository
 import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceConnectionRepository
 import com.example.amulet.shared.domain.devices.usecase.*
 import com.example.amulet.shared.domain.hugs.HugsRepository
 import com.example.amulet.shared.domain.hugs.PairsRepository
@@ -105,6 +106,7 @@ import com.example.amulet.shared.domain.courses.usecase.GetUnlockedItemsUseCase
 import com.example.amulet.shared.domain.courses.usecase.GetNextCourseItemUseCase
 import com.example.amulet.shared.domain.courses.usecase.CreateScheduleForCourseUseCase
 import com.example.amulet.shared.domain.courses.usecase.EnrollCourseUseCase
+import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
 import com.example.amulet.shared.domain.initialization.usecase.SeedLocalDataUseCase
 import com.example.amulet_android_app.BuildConfig
 import dagger.Module
@@ -138,6 +140,9 @@ object KoinBridgeModule {
         coursesRepository: CoursesRepository,
         rulesRepository: RulesRepository,
         notificationsRepository: NotificationsRepository,
+        deviceControlRepository: DeviceControlRepository,
+        deviceConnectionRepository: DeviceConnectionRepository,
+        deviceRegistryRepository: DeviceRegistryRepository,
     ): Koin =
         GlobalContext.getOrNull() ?: startKoin {
             androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.NONE)
@@ -153,7 +158,10 @@ object KoinBridgeModule {
                 single<CoursesRepository> { coursesRepository }
                 single<RulesRepository> { rulesRepository }
                 single<NotificationsRepository> { notificationsRepository }
-                
+                single<DeviceControlRepository> { deviceControlRepository }
+                single<DeviceConnectionRepository> { deviceConnectionRepository }
+                single<DeviceRegistryRepository> { deviceRegistryRepository }
+
                 // Initialization UseCase
                 single<SeedLocalDataUseCase> {
                     SeedLocalDataUseCase(
@@ -331,6 +339,9 @@ object KoinBridgeModule {
 
     @Provides
     fun provideAutoConnectLastDeviceUseCase(koin: Koin): AutoConnectLastDeviceUseCase = koin.get()
+
+    @Provides
+    fun provideDeviceHugSendListener(koin: Koin): DeviceHugSendListener = koin.get()
 
     // OTA UseCases
     @Provides

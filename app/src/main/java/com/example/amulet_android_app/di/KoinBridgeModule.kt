@@ -38,7 +38,6 @@ import com.example.amulet.shared.domain.hugs.BlockPairUseCase
 import com.example.amulet.shared.domain.hugs.DeletePairUseCase
 import com.example.amulet.shared.domain.hugs.UnblockPairUseCase
 import com.example.amulet.shared.domain.hugs.GetHugByIdUseCase
-import com.example.amulet.shared.domain.patterns.PatternPlaybackService
 import com.example.amulet.shared.domain.patterns.PatternsRepository
 import com.example.amulet.shared.domain.patterns.usecase.*
 import com.example.amulet.shared.domain.practices.PracticeSessionManager
@@ -416,7 +415,7 @@ object KoinBridgeModule {
     @Provides fun provideUpsertPatternMarkersUseCase(koin: Koin): UpsertPatternMarkersUseCase = koin.get()
     @Provides fun provideGetPatternSegmentsUseCase(koin: Koin): GetPatternSegmentsUseCase = koin.get()
     @Provides fun providePatternEditorFacade(koin: Koin): PatternEditorFacade = koin.get()
-    @Provides fun providePatternPlaybackService(koin: Koin): PatternPlaybackService = koin.get()
+    @Provides fun provideDevicePlaybackEngine(koin: Koin): com.example.amulet.shared.domain.playback.DevicePlaybackEngine = koin.get()
 
     // Practices UseCases
     @Provides fun provideGetPracticesStreamUseCase(koin: Koin): GetPracticesStreamUseCase = koin.get()

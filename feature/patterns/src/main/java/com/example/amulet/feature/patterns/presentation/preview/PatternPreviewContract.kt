@@ -4,11 +4,7 @@ import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.domain.devices.model.Device
 import com.example.amulet.shared.domain.patterns.model.Pattern
 import com.example.amulet.shared.domain.patterns.model.PatternSpec
-import com.example.amulet.shared.domain.patterns.usecase.PreviewProgress
-
-/**
- * Контракт для экрана предпросмотра паттерна.
- */
+import com.example.amulet.shared.domain.playback.PlaybackState
 
 data class PatternPreviewState(
     val pattern: Pattern? = null,
@@ -19,7 +15,7 @@ data class PatternPreviewState(
     val isPlaying: Boolean = false,
     val isLooping: Boolean = true,
     val isSendingToDevice: Boolean = false,
-    val progress: PreviewProgress? = null,
+    val playbackState: PlaybackState = PlaybackState.IDLE,
     val isDeviceConnected: Boolean = false,
     val batteryLevel: Int? = null,
     val error: AppError? = null

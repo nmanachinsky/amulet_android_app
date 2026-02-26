@@ -4,7 +4,8 @@ import com.example.amulet.core.database.entity.OutboxActionEntity
 import com.example.amulet.core.sync.processing.ActionProcessor
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
-import com.example.amulet.shared.domain.patterns.PatternPlaybackService
+import com.example.amulet.shared.domain.playback.DevicePlaybackEngine
+import com.example.amulet.shared.domain.playback.PlayableMedia
 import com.example.amulet.shared.domain.patterns.PatternsRepository
 import com.example.amulet.shared.domain.patterns.model.PatternId
 import com.github.michaelbull.result.Err
@@ -18,14 +19,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
-/**
- * ActionProcessor для отложенного воспроизведения hug-паттернов на амулете.
- *
- * Живёт в data-слое фичи "объятия" и подключается к OutboxEngine через Dagger map.
- */
 class HugDevicePlayActionProcessor @Inject constructor(
     private val patternsRepository: PatternsRepository,
-    private val playbackService: PatternPlaybackService,
+    private val playbackEngine: DevicePlaybackEngine,
     private val json: Json,
 ) : ActionProcessor {
 
@@ -44,19 +40,13 @@ class HugDevicePlayActionProcessor @Inject constructor(
         val pattern = patternsRepository.getPatternById(PatternId(patternIdValue)).firstOrNull()
             ?: return Err(AppError.NotFound)
 
-        val result = playbackService.playOnConnectedDevice(
-            spec = pattern.spec,
-            intensity = intensity,
-            isPreview = true,
+        val result = playbackEngine.play(
+            PlayableMedia.Preview(pattern.spec, intensity)
         )
 
         return result.fold(
             success = { Ok(Unit) },
             failure = { error ->
-                // Для команд воспроизведения hug-паттерна считаем временные BLE-проблемы
-                // (нет устройства / отключено) аналогом сетевой ошибки.
-                // Это позволяет движку Outbox применить стандартную стратегию ретраев
-                // с экспоненциальным бэкоффом.
                 val mapped = when (error) {
                     is AppError.BleError.DeviceNotFound,
                     is AppError.BleError.DeviceDisconnected -> AppError.Network

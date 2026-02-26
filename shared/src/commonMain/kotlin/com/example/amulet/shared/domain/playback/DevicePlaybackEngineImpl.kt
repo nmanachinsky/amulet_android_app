@@ -20,6 +20,8 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,8 +42,10 @@ class DevicePlaybackEngineImpl(
 
     private val _playbackState = MutableStateFlow(PlaybackState.IDLE)
     override val playbackState: Flow<PlaybackState> = _playbackState.asStateFlow()
+    private val mutex = Mutex()
 
-    override suspend fun play(media: PlayableMedia): AppResult<Unit> = withContext(dispatcher) {
+    override suspend fun play(media: PlayableMedia): AppResult<Unit> = mutex.withLock {
+        withContext(dispatcher) {
         val status = awaitConnectedDeviceStatus()
             ?: return@withContext Err(AppError.BleError.DeviceDisconnected)
 
@@ -50,15 +54,18 @@ class DevicePlaybackEngineImpl(
             is PlayableMedia.SinglePattern -> playSinglePattern(media, status)
             is PlayableMedia.PracticeScript -> playPracticeScript(media, status)
         }
+        }
     }
 
-    override suspend fun stop(): AppResult<Unit> = withContext(dispatcher) {
-        try {
-            _playbackState.value = PlaybackState.IDLE
-            deviceControlRepository.clearDevice()
-        } catch (e: Exception) {
-            Logger.d("stop: exception $e", tag = TAG)
-            Err(AppError.Unknown)
+    override suspend fun stop(): AppResult<Unit> = mutex.withLock {
+        withContext(dispatcher) {
+            try {
+                _playbackState.value = PlaybackState.IDLE
+                deviceControlRepository.clearDevice()
+            } catch (e: Exception) {
+                Logger.d("stop: exception $e", tag = TAG)
+                Err(AppError.Unknown)
+            }
         }
     }
 

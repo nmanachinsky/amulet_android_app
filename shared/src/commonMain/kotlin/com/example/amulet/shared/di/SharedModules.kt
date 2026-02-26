@@ -155,7 +155,6 @@ private val sharedModule = module {
     
     // Patterns playback (PatternTimeline -> DeviceTimelineSegment -> DeviceAnimationPlan)
     single<DeviceTimelineCompiler> { DeviceTimelineCompilerImpl() }
-
     single<DevicePlaybackEngine> { DevicePlaybackEngineImpl(get(), get(), get(), get(), get(), get(), get()) }
     
     // Patterns UseCases

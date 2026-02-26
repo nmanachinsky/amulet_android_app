@@ -134,4 +134,7 @@ object NetworkModule {
     @Provides
     fun provideNotificationsApiService(retrofit: Retrofit): NotificationsApiService = retrofit.create(NotificationsApiService::class.java)
 
+    @Provides
+    fun provideFileDownloader(okHttpClient: okhttp3.OkHttpClient): FileDownloader = OkHttpFileDownloader(okHttpClient)
+
 }

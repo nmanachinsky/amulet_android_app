@@ -12,6 +12,7 @@ import com.example.amulet.shared.domain.auth.usecase.SignInWithGoogleUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignOutUseCase
 import com.example.amulet.shared.domain.auth.usecase.SignUpUseCase
 import com.example.amulet.shared.domain.devices.repository.OtaRepository
+import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
 import com.example.amulet.shared.domain.devices.usecase.*
 import com.example.amulet.shared.domain.hugs.HugsRepository
 import com.example.amulet.shared.domain.hugs.PairsRepository

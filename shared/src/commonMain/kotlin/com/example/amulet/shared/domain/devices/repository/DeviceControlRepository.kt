@@ -59,6 +59,12 @@ interface DeviceControlRepository {
     suspend fun clearDevice(): AppResult<Unit>
     
     /**
+     * Ожидать начала воспроизведения паттерна.
+     * Скрывает детали BLE-протокола (парсинг строки уведомления).
+     */
+    suspend fun awaitPlaybackStarted(patternId: String, timeoutMs: Long): AppResult<Unit>
+    
+    /**
      * Наблюдать за уведомлениями от устройства.
      */
     fun observeNotifications(type: NotificationType? = null): Flow<String>

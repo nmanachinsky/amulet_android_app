@@ -239,7 +239,7 @@ class PatternPlaybackService(
     }
 
     /**
-     * Отправить PLAY и дождаться NOTIFY:PATTERN:STARTED.
+     * Отправить PLAY и дождаться начала воспроизведения.
      */
     suspend fun playAndAwaitStart(
         patternId: PatternId,
@@ -248,20 +248,8 @@ class PatternPlaybackService(
         val commandResult = deviceControlRepository.playPattern(patternId.value)
         commandResult.fold(
             success = {
-                try {
-                    withTimeout(timeoutMs) {
-                        deviceControlRepository.observeNotifications(NotificationType.PATTERN)
-                            .first { it.startsWith("NOTIFY:PATTERN:STARTED:${patternId.value}") }
-                    }
-                    Ok(Unit)
-                } catch (e: Exception) {
-                    Logger.w(
-                        "playAndAwaitStart: timeout waiting NOTIFY:PATTERN:STARTED for ${patternId.value}",
-                        e,
-                        tag = TAG
-                    )
-                    Err(AppError.Timeout)
-                }
+                // Детали BLE-протокола скрыты в репозитории
+                deviceControlRepository.awaitPlaybackStarted(patternId.value, timeoutMs)
             },
             failure = { Err(it) }
         )

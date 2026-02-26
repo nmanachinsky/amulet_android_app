@@ -18,8 +18,11 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -111,6 +114,20 @@ class DeviceControlRepositoryImpl @Inject constructor(
         return sendCustomCommand("CLEAR_ALL")
     }
 
+    override suspend fun awaitPlaybackStarted(patternId: String, timeoutMs: Long): AppResult<Unit> {
+        return try {
+            withTimeout(timeoutMs) {
+                observeNotifications(NotificationType.PATTERN)
+                    .first { it.startsWith("NOTIFY:PATTERN:STARTED:$patternId") }
+                Ok(Unit)
+            }
+        } catch (e: TimeoutCancellationException) {
+            Err(AppError.BleError.CommandTimeout("Playback start timeout for pattern: $patternId"))
+        } catch (e: Exception) {
+            Err(AppError.Unknown)
+        }
+    }
+
     override fun observeNotifications(type: NotificationType?): Flow<String> {
         return bleDataSource.observeNotifications(type)
     }
@@ -121,7 +138,7 @@ class DeviceControlRepositoryImpl @Inject constructor(
     }
 
     private fun assemblePayload(segments: List<DeviceTimelineSegment>): ByteArray {
-        val byteArrays = segments.map { it.toByteArray() }
+        val byteArrays = segments.map { segmentToByteArray(it) }
         val totalSize = byteArrays.sumOf { it.size }
         val payload = ByteArray(totalSize)
         var offset = 0
@@ -133,5 +150,62 @@ class DeviceControlRepositoryImpl @Inject constructor(
             offset += segmentBytes.size
         }
         return payload
+    }
+
+    /**
+     * Сериализация сегмента в байты (SegmentLinearRgbV2, little-endian).
+     * Перенесено из Domain слоя в Data слой.
+     */
+    private fun segmentToByteArray(segment: DeviceTimelineSegment): ByteArray {
+        val result = ByteArray(21)
+        var i = 0
+
+        // opcode = 0x01 (LINEAR_RGB)
+        result[i++] = 0x01
+
+        result[i++] = (segment.targetMask and 0xFF).toByte()
+        result[i++] = (segment.priority and 0xFF).toByte()
+        result[i++] = mixModeToByte(segment.mixMode)
+
+        writeUInt32LE(segment.startMs, result, i)
+        i += 4
+        writeUInt32LE(segment.durationMs, result, i)
+        i += 4
+        writeUInt16LE(segment.fadeInMs, result, i)
+        i += 2
+        writeUInt16LE(segment.fadeOutMs, result, i)
+        i += 2
+
+        result[i++] = easingToByte(segment.easingIn)
+        result[i++] = easingToByte(segment.easingOut)
+
+        result[i++] = (segment.color.red and 0xFF).toByte()
+        result[i++] = (segment.color.green and 0xFF).toByte()
+        result[i] = (segment.color.blue and 0xFF).toByte()
+
+        return result
+    }
+
+    private fun mixModeToByte(mode: com.example.amulet.shared.domain.patterns.model.MixMode): Byte = when (mode) {
+        com.example.amulet.shared.domain.patterns.model.MixMode.OVERRIDE -> 0
+        com.example.amulet.shared.domain.patterns.model.MixMode.ADDITIVE -> 1
+    }.toByte()
+
+    private fun easingToByte(easing: com.example.amulet.shared.domain.patterns.model.Easing): Byte = when (easing) {
+        com.example.amulet.shared.domain.patterns.model.Easing.LINEAR -> 0
+    }.toByte()
+
+    private fun writeUInt32LE(value: Long, target: ByteArray, offset: Int) {
+        val v = value.coerceIn(0L, 0xFFFF_FFFFL)
+        target[offset] = (v and 0xFF).toByte()
+        target[offset + 1] = ((v ushr 8) and 0xFF).toByte()
+        target[offset + 2] = ((v ushr 16) and 0xFF).toByte()
+        target[offset + 3] = ((v ushr 24) and 0xFF).toByte()
+    }
+
+    private fun writeUInt16LE(value: Int, target: ByteArray, offset: Int) {
+        val v = value.coerceIn(0, 0xFFFF)
+        target[offset] = (v and 0xFF).toByte()
+        target[offset + 1] = ((v ushr 8) and 0xFF).toByte()
     }
 }

@@ -58,12 +58,17 @@ import com.example.amulet.shared.domain.user.usecase.UpdateUserProfileUseCase
 import com.example.amulet.shared.domain.dashboard.usecase.GetDashboardDailyStatsUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Koin модули для :shared (domain layer).
  * Предоставляет UseCase'ы, которые зависят только от интерфейсов репозиториев.
  */
 private val sharedModule = module {
+    // Coroutine dispatchers
+    single<CoroutineDispatcher> { Dispatchers.Default }
+
     // Auth UseCases
     factory { SignInUseCase(get(), get()) }
     factory { SignInWithGoogleUseCase(get(), get()) }

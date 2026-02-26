@@ -4,7 +4,6 @@ import com.example.amulet.core.ble.internal.AmuletDeviceImpl
 import com.example.amulet.core.ble.internal.DeviceCommandSenderImpl
 import com.example.amulet.core.ble.internal.DeviceConnectionManagerImpl
 import com.example.amulet.core.ble.internal.DeviceStateManagerImpl
-import com.example.amulet.core.ble.protocol.AmuletProtocolParser
 import com.example.amulet.core.ble.service.AnimationUploadService
 import com.example.amulet.core.ble.service.AnimationUploadServiceImpl
 import com.example.amulet.core.ble.service.OtaUpdateService
@@ -27,12 +26,6 @@ abstract class BleModule {
     abstract fun bindBleGattClient(
         impl: BleGattClientImpl
     ): BleGattClient
-
-    @Binds
-    @Singleton
-    abstract fun bindAmuletProtocolParser(
-        impl: AmuletProtocolParser
-    ): AmuletProtocolParser
 
     @Binds
     @Singleton

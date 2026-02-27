@@ -3,12 +3,12 @@ package com.example.amulet.feature.practices.presentation.session
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.amulet.core.foreground.PracticeForegroundLauncher
+import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.devices.model.DeviceSessionStatus
 import com.example.amulet.shared.domain.devices.usecase.ObserveDeviceSessionStatusUseCase
 import com.example.amulet.shared.domain.practices.PracticeSessionManager
 import com.example.amulet.shared.domain.practices.model.MoodKind
-import com.example.amulet.shared.domain.practices.model.PracticeSessionStatus
 import com.example.amulet.shared.domain.patterns.usecase.GetPatternByIdUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetPracticeByIdUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetUserPreferencesStreamUseCase
@@ -142,6 +142,8 @@ class PracticeSessionViewModel @Inject constructor(
                 val previousState = _state.value
                 val previousAudioMode = previousState.audioMode
                 val previousSession = previousState.session
+                val displaySession = session
+                    ?: previousSession?.takeIf { it.status == com.example.amulet.shared.domain.practices.model.PracticeSessionStatus.COMPLETED }
                 val effectivePractice = practice ?: previousState.practice
                 val effectiveTitle = practice?.title ?: previousState.title
                 val effectiveType = practice?.type?.name ?: previousState.type
@@ -151,9 +153,7 @@ class PracticeSessionViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        // Если из стрима пришёл null, но у нас уже есть завершённая сессию,
-                        // не затираем её, чтобы показать финальный экран.
-                        session = session ?: previousSession,
+                        session = displaySession,
                         progress = progress,
                         currentStepIndex = progress?.currentStepIndex,
                         practice = effectivePractice,
@@ -170,18 +170,6 @@ class PracticeSessionViewModel @Inject constructor(
                         patternName = pattern?.title ?: previousState.patternName,
                     )
                 }
-
-                // Автозавершение практики по достижении конца
-                val totalSec = progress?.totalSec ?: practice?.durationSec
-                if (
-                    session != null &&
-                    session.status == PracticeSessionStatus.ACTIVE &&
-                    totalSec != null &&
-                    progress != null &&
-                    progress.elapsedSec >= totalSec
-                ) {
-                    stop(completed = true)
-                }
             }.collect { }
         }
     }
@@ -190,7 +178,6 @@ class PracticeSessionViewModel @Inject constructor(
         val current = _state.value.session
         Logger.d("start: requested, currentSession=$current", tag = TAG)
         if (current?.status == com.example.amulet.shared.domain.practices.model.PracticeSessionStatus.ACTIVE) {
-            // Уже есть активная сессия — не создаём новую.
             Logger.d("start: session already ACTIVE, ignoring", tag = TAG)
             return
         }
@@ -199,6 +186,12 @@ class PracticeSessionViewModel @Inject constructor(
             Logger.d("start: practiceId is null, abort", tag = TAG)
             return
         }
+
+        // Инверсия контроля: запускаем foreground-сервис МГНОВЕННО,
+        // чтобы защитить процесс от убийства ОС при переходе в фон.
+        // Тяжелая логика (BLE, паттерны) стартует уже под защитой сервиса.
+        practiceForegroundLauncher.ensureServiceStarted()
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, isPatternPreloading = true) }
             val currentState = _state.value
@@ -221,14 +214,12 @@ class PracticeSessionViewModel @Inject constructor(
                 Logger.d("start: startSession success session=$session", tag = TAG)
                 _state.update { it.copy(isLoading = false, isPatternPreloading = false, session = session, error = null) }
 
-                // Если пользователь выбрал настроение до практики, сохраняем его на сессию
                 val moodBefore = _state.value.moodBefore
                 if (session != null && moodBefore != null) {
                     launch {
                         updateSessionMoodBeforeUseCase(session.id, moodBefore)
                     }
                 }
-                practiceForegroundLauncher.ensureServiceStarted()
             }
         }
     }
@@ -238,10 +229,13 @@ class PracticeSessionViewModel @Inject constructor(
         viewModelScope.launch {
             val result = practiceSessionManager.stopSession(completed)
             val error = result.component2()
-            if (error != null) {
+            if (error != null && error != AppError.NotFound) {
                 Logger.d("stop: stopSession failed error=$error", tag = TAG)
                 emitEffect(PracticeSessionEffect.ShowError(error))
             } else {
+                if (error == AppError.NotFound) {
+                    Logger.d("stop: stopSession returned NotFound (already stopped), treating as success", tag = TAG)
+                }
                 Logger.d("stop: stopSession success completed=$completed", tag = TAG)
                 if (!completed) {
                     _state.update { it.copy(session = null, progress = null, currentStepIndex = null) }

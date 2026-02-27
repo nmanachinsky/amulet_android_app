@@ -80,7 +80,6 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HugsRoute(
-    onOpenHistory: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
     onOpenEmotions: () -> Unit = {},
     onOpenPairing: () -> Unit = {},
@@ -96,7 +95,6 @@ fun HugsRoute(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                HugsHomeEffect.NavigateToHistory -> onOpenHistory()
                 HugsHomeEffect.NavigateToSettings -> onOpenSettings()
                 HugsHomeEffect.NavigateToEmotions -> onOpenEmotions()
                 HugsHomeEffect.NavigateToPairing -> onOpenPairing()
@@ -684,13 +682,6 @@ private fun QuickActionsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            ActionCard(
-                title = stringResource(R.string.hugs_home_quick_actions_history_title),
-                description = stringResource(R.string.hugs_home_quick_actions_history_desc),
-                icon = Icons.Filled.History,
-                onClick = { onIntent(HugsHomeIntent.OpenHistory) },
-                modifier = Modifier.weight(1f)
-            )
             ActionCard(
                 title = stringResource(R.string.hugs_home_quick_actions_emotions_title),
                 description = stringResource(R.string.hugs_home_quick_actions_emotions_desc),

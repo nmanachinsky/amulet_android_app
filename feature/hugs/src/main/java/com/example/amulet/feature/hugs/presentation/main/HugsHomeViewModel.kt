@@ -196,7 +196,7 @@ class HugsHomeViewModel @Inject constructor(
                             currentUser = data.base.user,
                             activePair = data.base.pair,
                             partnerUser = data.partnerUser,
-                            hugs = data.hugs.sortedByDescending { hug -> hug.createdAt }.take(20),
+                            hugs = data.hugs.sortedByDescending { hug -> hug.createdAt }.take(15),
                             pairEmotions = data.emotions.sortedBy { it.order },
                             quickReplies = data.quickReplies,
                         )
@@ -255,7 +255,6 @@ class HugsHomeViewModel @Inject constructor(
             is HugsHomeIntent.OpenQuickReplyPicker -> openQuickReplyPicker(intent)
             HugsHomeIntent.ClosePairEmotionPicker -> closePairEmotionPicker()
             is HugsHomeIntent.SelectPairEmotion -> selectPairEmotion(intent.emotionId)
-            HugsHomeIntent.OpenHistory -> emitEffect(HugsHomeEffect.NavigateToHistory)
             HugsHomeIntent.OpenSettings -> emitEffect(HugsHomeEffect.NavigateToSettings)
             HugsHomeIntent.OpenEmotions -> emitEffect(HugsHomeEffect.NavigateToEmotions)
             HugsHomeIntent.OpenPairing -> emitEffect(HugsHomeEffect.NavigateToPairing)

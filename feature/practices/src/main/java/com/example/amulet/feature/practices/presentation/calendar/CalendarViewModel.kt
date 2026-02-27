@@ -2,13 +2,10 @@ package com.example.amulet.feature.practices.presentation.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.amulet.shared.domain.practices.PracticeSessionManager
-import com.example.amulet.shared.domain.practices.model.PracticeSessionSource
 import com.example.amulet.shared.domain.practices.usecase.GetScheduledSessionsForDateRangeUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetPracticeByIdUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetScheduleByPracticeIdUseCase
 import com.example.amulet.shared.domain.practices.usecase.UpsertPracticeScheduleUseCase
-import com.example.amulet.shared.domain.practices.usecase.DeletePracticeScheduleUseCase
 import com.example.amulet.shared.domain.practices.usecase.GetPracticesStreamUseCase
 import com.example.amulet.shared.domain.practices.usecase.SkipScheduledSessionUseCase
 import com.example.amulet.shared.domain.practices.model.PracticeSchedule
@@ -27,7 +24,6 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -40,10 +36,8 @@ class CalendarViewModel @Inject constructor(
     private val getPracticeByIdUseCase: GetPracticeByIdUseCase,
     private val getScheduleByPracticeIdUseCase: GetScheduleByPracticeIdUseCase,
     private val upsertPracticeScheduleUseCase: UpsertPracticeScheduleUseCase,
-    private val deletePracticeScheduleUseCase: DeletePracticeScheduleUseCase,
     private val getPracticesStreamUseCase: GetPracticesStreamUseCase,
     private val skipScheduledSessionUseCase: SkipScheduledSessionUseCase,
-    private val practiceSessionManager: PracticeSessionManager,
 ) : ViewModel() {
 
     private val timeZone = TimeZone.currentSystemDefault()

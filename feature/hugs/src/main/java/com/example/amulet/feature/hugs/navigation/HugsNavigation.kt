@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import com.example.amulet.feature.hugs.presentation.details.HugDetailsRoute
 import com.example.amulet.feature.hugs.presentation.emotions.HugsEmotionsRoute
 import com.example.amulet.feature.hugs.presentation.emotions.editor.HugsEmotionEditorRoute
-import com.example.amulet.feature.hugs.presentation.history.HugsHistoryRoute
 import com.example.amulet.feature.hugs.presentation.main.HugsRoute
 import com.example.amulet.feature.hugs.presentation.pairing.HugsPairingRoute
 import com.example.amulet.feature.hugs.presentation.settings.HugsSettingsRoute
@@ -25,7 +24,6 @@ object HugsGraph {
 
 object HugsDestination {
     const val main: String = "hugs/main"
-    const val history: String = "hugs/history"
     const val settings: String = "hugs/settings"
     const val emotions: String = "hugs/emotions"
     const val emotionEditor: String = "hugs/emotions/editor?emotionId={emotionId}"
@@ -38,12 +36,6 @@ fun NavController.navigateToHugs(popUpToInclusive: Boolean = false) {
         if (popUpToInclusive) {
             popUpTo(HugsDestination.main) { inclusive = true }
         }
-        launchSingleTop = true
-    }
-}
-
-fun NavController.navigateToHugsHistory() {
-    navigate(HugsDestination.history) {
         launchSingleTop = true
     }
 }
@@ -96,17 +88,9 @@ fun NavGraphBuilder.hugsGraph(
             )
         ) {
             HugsRoute(
-                onOpenHistory = { navController.navigateToHugsHistory() },
                 onOpenSettings = { navController.navigateToHugsSettings() },
                 onOpenEmotions = { navController.navigateToHugsEmotions() },
                 onOpenPairing = { navController.navigateToHugsPairing() },
-            )
-        }
-
-        composable(route = HugsDestination.history) {
-            HugsHistoryRoute(
-                onNavigateBack = { navController.popBackStack() },
-                onOpenDetails = { hugId -> navController.navigateToHugDetails(hugId) },
             )
         }
 

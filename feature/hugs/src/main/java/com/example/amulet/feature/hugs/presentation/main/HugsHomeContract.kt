@@ -46,7 +46,6 @@ sealed class HugsHomeIntent {
         val gestureType: GestureType,
     ) : HugsHomeIntent()
 
-    object OpenHistory : HugsHomeIntent()
     object OpenSettings : HugsHomeIntent()
     object OpenEmotions : HugsHomeIntent()
     object OpenPairing : HugsHomeIntent()
@@ -54,7 +53,6 @@ sealed class HugsHomeIntent {
 }
 
 sealed class HugsHomeEffect {
-    object NavigateToHistory : HugsHomeEffect()
     object NavigateToSettings : HugsHomeEffect()
     object NavigateToEmotions : HugsHomeEffect()
     object NavigateToPairing : HugsHomeEffect()

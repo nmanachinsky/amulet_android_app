@@ -34,11 +34,7 @@ class MainActivity : ComponentActivity() {
             val session = practiceSessionManager.activeSession.firstOrNull()
             if (session != null) {
                 val intent = Intent(this@MainActivity, AmuletForegroundService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
-                }
+                startForegroundService(intent)
             }
         }
     }

@@ -88,22 +88,6 @@ fun HugsSettingsRoute(
                         colors = TopAppBarDefaults.topAppBarColors()
                     )
                 },
-                floatingActionButton = {
-                    if (state.activePair != null) {
-                        FloatingActionButton(
-                            onClick = {
-                                if (!state.isSaving) {
-                                    viewModel.onIntent(HugsSettingsIntent.SavePairSettings)
-                                }
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Save,
-                                contentDescription = stringResource(R.string.hugs_settings_save_button),
-                            )
-                        }
-                    }
-                },
                 snackbarHost = {
                     SnackbarHost(hostState = snackbarHostState)
                 },
@@ -128,6 +112,7 @@ fun HugsSettingsRoute(
     HugsSettingsScreen(
         state = state,
         onIntent = viewModel::onIntent,
+        onSaveClick = { viewModel.onIntent(HugsSettingsIntent.SavePairSettings) }
     )
 }
 
@@ -136,6 +121,7 @@ fun HugsSettingsRoute(
 private fun HugsSettingsScreen(
     state: HugsSettingsState,
     onIntent: (HugsSettingsIntent) -> Unit,
+    onSaveClick: () -> Unit,
 ) {
     var showDisconnectDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -442,6 +428,20 @@ private fun HugsSettingsScreen(
                             Text(text = stringResource(R.string.hugs_settings_delete_pair_button))
                         }
                     }
+                }
+            }
+        }
+
+        // Кнопка сохранения
+        if (state.activePair != null) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onSaveClick,
+                    enabled = !state.isSaving,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = stringResource(R.string.hugs_settings_save_button))
                 }
             }
         }

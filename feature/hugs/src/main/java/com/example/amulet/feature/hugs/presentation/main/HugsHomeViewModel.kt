@@ -511,6 +511,6 @@ class HugsHomeViewModel @Inject constructor(
         val partnerUser: com.example.amulet.shared.domain.user.model.User?,
         val hugs: List<com.example.amulet.shared.domain.hugs.model.Hug>,
         val emotions: List<com.example.amulet.shared.domain.hugs.model.PairEmotion>,
-        val quickReplies: List<com.example.amulet.shared.domain.hugs.model.PairQuickReply>,
+        val quickReplies: List<PairQuickReply>,
     )
 }

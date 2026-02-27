@@ -33,6 +33,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -72,7 +73,7 @@ class PairsRepositoryImpl @Inject constructor(
 
     override suspend fun acceptPair(inviteId: String): AppResult<Unit> {
         Logger.d("PairsRepositoryImpl.acceptPair(inviteId=$inviteId)", "PairsRepositoryImpl")
-        val result = remoteDataSource.acceptPair(inviteId).map { Unit }
+        val result = remoteDataSource.acceptPair(inviteId).map { }
         result.component1()?.let {
             Logger.d("PairsRepositoryImpl.acceptPair: success inviteId=$inviteId", "PairsRepositoryImpl")
         }
@@ -271,34 +272,6 @@ class PairsRepositoryImpl @Inject constructor(
         userId: UserId,
         settings: PairMemberSettings
     ): AppResult<Unit> {
-        val nowMillis = System.currentTimeMillis()
-
-        val payloadObject = buildJsonObject {
-            put("pairId", pairId.value)
-            put("userId", userId.value)
-            put("muted", settings.muted)
-            val quietStart = settings.quietHoursStartMinutes
-            val quietEnd = settings.quietHoursEndMinutes
-            val maxPerHour = settings.maxHugsPerHour
-            if (quietStart != null) {
-                put("quietHoursStartMinutes", quietStart)
-            } else {
-                put("quietHoursStartMinutes", JsonNull)
-            }
-            if (quietEnd != null) {
-                put("quietHoursEndMinutes", quietEnd)
-            } else {
-                put("quietHoursEndMinutes", JsonNull)
-            }
-            if (maxPerHour != null) {
-                put("maxHugsPerHour", maxPerHour)
-            } else {
-                put("maxHugsPerHour", JsonNull)
-            }
-        }
-
-        val payload = json.encodeToString(payloadObject)
-
         localDataSource.withPairTransaction {
             localDataSource.updateMemberSettings(
                 pairId = pairId.value,
@@ -308,35 +281,15 @@ class PairsRepositoryImpl @Inject constructor(
                 quietEnd = settings.quietHoursEndMinutes,
                 maxHugsPerHour = settings.maxHugsPerHour
             )
-
-            val action = OutboxActionEntity(
-                id = UUID.randomUUID().toString(),
-                type = OutboxActionType.PAIR_SETTINGS_UPDATE,
-                payloadJson = payload,
-                status = OutboxActionStatus.PENDING,
-                retryCount = 0,
-                lastError = null,
-                idempotencyKey = "pair_settings_${pairId.value}_${userId.value}",
-                createdAt = nowMillis,
-                updatedAt = nowMillis,
-                availableAt = nowMillis,
-                priority = 1,
-                targetEntityId = pairId.value
-            )
-
-            localDataSource.enqueueOutboxAction(action)
         }
-
-        outboxScheduler.scheduleSync()
-
         return Ok(Unit)
     }
 
     override suspend fun blockPair(pairId: PairId): AppResult<Unit> =
-        remoteDataSource.blockPair(pairId.value).map { Unit }
+        remoteDataSource.blockPair(pairId.value).map { }
 
     override suspend fun unblockPair(pairId: PairId): AppResult<Unit> =
-        remoteDataSource.unblockPair(pairId.value).map { Unit }
+        remoteDataSource.unblockPair(pairId.value).map { }
 
     override suspend fun deletePair(pairId: PairId): AppResult<Unit> {
         val remoteResult = remoteDataSource.deletePair(pairId.value)

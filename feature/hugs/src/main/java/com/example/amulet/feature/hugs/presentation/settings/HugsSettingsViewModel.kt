@@ -202,6 +202,7 @@ class HugsSettingsViewModel @Inject constructor(
                 _effects.emit(HugsSettingsEffect.ShowError(error))
             } else {
                 _state.update { it.copy(isSaving = false) }
+                _effects.emit(HugsSettingsEffect.Close)
             }
         }
     }

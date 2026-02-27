@@ -67,6 +67,30 @@
                     android:host="amuletinvite.vercel.app"
                     android:pathPrefix="/hugs/pair" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="amulet"
+                    android:host="practices"
+                    android:pathPrefix="/session" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="amulet.app"
+                    android:pathPrefix="/practices/session" />
+            </intent-filter>
         </activity>
 
         <service

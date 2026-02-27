@@ -61,7 +61,6 @@ fun PracticeSessionRoute(
                         },
                         navigationIcon = {
                             IconButton(onClick = {
-                                viewModel.handleIntent(PracticeSessionIntent.Stop(completed = false))
                                 onNavigateBack()
                             }) {
                                 Icon(

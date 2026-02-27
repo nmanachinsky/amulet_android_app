@@ -137,6 +137,17 @@ class PracticeSessionManagerImpl(
                     (session.actualDurationSec ?: session.durationSec ?: 0).coerceAtLeast(0)
                 else -> 0
             }
+
+            // Автозавершение практики по достижении конца
+            if (session.status == PracticeSessionStatus.ACTIVE &&
+                totalDurationSec != null &&
+                elapsed >= totalDurationSec
+            ) {
+                Logger.d("tickerProgressFlow: auto-completing session ${session.id}", tag = TAG)
+                stopSessionUseCase(session.id, completed = true)
+                break
+            }
+
             val (effectiveIndex, effectiveStep) = computeCurrentStep(scriptSteps, elapsed) ?: (null to null)
 
             emit(

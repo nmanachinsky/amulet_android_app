@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 /**
  * Контроллер foreground-логики для практик.
@@ -40,11 +41,20 @@ class PracticeForegroundController @Inject constructor(
 
     private lateinit var service: Service
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var job = SupervisorJob()
+    private var scope = CoroutineScope(job + Dispatchers.Main.immediate)
 
     fun onCreate(service: Service) {
         this.service = service
         Logger.d("PracticeForegroundController.onCreate", tag = TAG)
+
+        // Пересоздаём scope, если предыдущий был отменён
+        if (job.isCancelled) {
+            job = SupervisorJob()
+            scope = CoroutineScope(job + Dispatchers.Main.immediate)
+            Logger.d("PracticeForegroundController: recreated scope after cancellation", tag = TAG)
+        }
+
         if (!hasRequiredPermissionsForConnectedDeviceFgs()) {
             // Нет необходимых runtime‑разрешений – не стартуем FGS, чтобы не уронить приложение.
             Logger.w("Required FGS/Bluetooth permissions are missing, skipping startForeground", tag = TAG)
@@ -70,18 +80,28 @@ class PracticeForegroundController @Inject constructor(
                     val session = practiceSessionManager.activeSession.firstOrNull()
                     val sessionId = session?.id ?: return@launch
                     Logger.d("ACTION_PRACTICE_STOP for sessionId=$sessionId", tag = TAG)
-                    practiceSessionManager.stopSession(completed = true)
+                    practiceSessionManager.stopSession(completed = false)
                     // дальнейшая остановка сервиса произойдёт через observeActiveSession
                 }
             }
             ACTION_PRACTICE_OPEN -> {
-                Logger.d("ACTION_PRACTICE_OPEN", tag = TAG)
-                val launchIntent =
-                    service.packageManager.getLaunchIntentForPackage(service.packageName)?.apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                scope.launch {
+                    val session = practiceSessionManager.activeSession.firstOrNull()
+                    val practiceId = session?.practiceId
+                    Logger.d("ACTION_PRACTICE_OPEN practiceId=$practiceId", tag = TAG)
+
+                    val intent = if (practiceId != null) {
+                        val uri = "amulet://practices/session/$practiceId".toUri()
+                        Intent(Intent.ACTION_VIEW, uri)
+                    } else {
+                        service.packageManager.getLaunchIntentForPackage(service.packageName)
+                    }?.apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     }
-                if (launchIntent != null) {
-                    service.startActivity(launchIntent)
+
+                    if (intent != null) {
+                        service.startActivity(intent)
+                    }
                 }
             }
         }
@@ -111,6 +131,11 @@ class PracticeForegroundController @Inject constructor(
                 .collect { (session, progress) ->
                     if (session == null) {
                         Logger.d("activeSession is null -> setPracticeActive(false)", tag = TAG)
+                        // Даже если orchestrator по какой-то причине не остановит сервис,
+                        // мы обязаны убрать foreground-уведомление, иначе оно зависнет навсегда.
+                        service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
+                        val manager = service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        manager.cancel(NOTIFICATION_ID)
                         orchestrator.setPracticeActive(false)
                     } else {
                         Logger.d(
@@ -183,6 +208,7 @@ class PracticeForegroundController @Inject constructor(
         }
 
         val builder = NotificationCompat.Builder(service, PRACTICES_CHANNEL_ID)
+            .setOnlyAlertOnce(true)
             .setContentTitle(title)
             .setContentText(contentText)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)

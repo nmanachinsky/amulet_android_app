@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -51,6 +53,23 @@ class PracticeSessionViewModel @Inject constructor(
 
     init {
         observeSession()
+        observeDeviceSession()
+    }
+
+    private fun observeDeviceSession() {
+        observeDeviceSessionStatusUseCase()
+            .onEach { sessionStatus ->
+                val isConnected = sessionStatus.connection is com.example.amulet.shared.domain.devices.model.BleConnectionState.Connected
+                _state.update {
+                    it.copy(
+                        connectionState = sessionStatus.connection,
+                        batteryLevel = if (isConnected) sessionStatus.liveStatus?.batteryLevel else null,
+                        isCharging = if (isConnected) sessionStatus.liveStatus?.isCharging ?: false else false,
+                        isDeviceOnline = sessionStatus.liveStatus?.isOnline ?: false
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun setPracticeIdIfEmpty(id: String) {

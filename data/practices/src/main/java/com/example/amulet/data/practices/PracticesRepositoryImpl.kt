@@ -212,7 +212,7 @@ class PracticesRepositoryImpl @Inject constructor(
         intensity: Double?,
         brightness: Double?,
         vibrationLevel: Double?,
-        audioMode: com.example.amulet.shared.domain.practices.model.PracticeAudioMode?,
+        audioMode: PracticeAudioMode?,
         source: PracticeSessionSource?,
     ): AppResult<PracticeSession> {
         val now = System.currentTimeMillis()
@@ -329,7 +329,7 @@ class PracticesRepositoryImpl @Inject constructor(
 
     override suspend fun upsertSchedule(
         userId: UserId,
-        schedule: com.example.amulet.shared.domain.practices.model.PracticeSchedule
+        schedule: PracticeSchedule
     ): AppResult<Unit> {
         val entity = schedule.toEntity(userId.value, json)
         local.upsertSchedule(entity)

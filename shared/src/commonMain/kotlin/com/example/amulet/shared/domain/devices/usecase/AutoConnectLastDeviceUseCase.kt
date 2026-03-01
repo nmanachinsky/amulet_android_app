@@ -5,6 +5,8 @@ import com.example.amulet.shared.domain.auth.usecase.GetCurrentUserIdUseCase
 import com.example.amulet.shared.domain.devices.model.BleConnectionState
 import com.example.amulet.shared.domain.devices.repository.DeviceConnectionRepository
 import com.example.amulet.shared.domain.devices.repository.DeviceRegistryRepository
+import com.example.amulet.shared.domain.user.model.UserId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 
@@ -16,15 +18,14 @@ class AutoConnectLastDeviceUseCase(
     suspend operator fun invoke() {
         Logger.d("AutoConnect: start", tag = TAG)
         
-        val result = getCurrentUserIdUseCase()
-        if (!result.isOk) {
+        val result = getUserIdWithRetry()
+        if (result == null) {
             Logger.d("AutoConnect: no userId, result=$result", tag = TAG)
             return
         }
-        val userId = result.component1()!!
         
         val lastUsed = try {
-            deviceRegistryRepository.getLastConnectedDevice(userId)
+            deviceRegistryRepository.getLastConnectedDevice(result)
         } catch (e: Exception) {
             Logger.e("AutoConnect: failed to get last connected device: $e", tag = TAG)
             null
@@ -38,7 +39,7 @@ class AutoConnectLastDeviceUseCase(
         Logger.d("AutoConnect: last device id=${lastUsed.id.value} ble=${lastUsed.bleAddress}", tag = TAG)
 
         try {
-            val flow = deviceConnectionRepository.connectToDevice(userId, lastUsed.bleAddress)
+            val flow = deviceConnectionRepository.connectToDevice(result, lastUsed.bleAddress)
             flow.first { state ->
                 when (state) {
                     is BleConnectionState.Connected -> {
@@ -57,7 +58,24 @@ class AutoConnectLastDeviceUseCase(
         }
     }
 
+    private suspend fun getUserIdWithRetry(): UserId? {
+        var delayMs = INITIAL_RETRY_DELAY_MS
+        repeat(MAX_RETRY_ATTEMPTS) { attempt ->
+            val result = getCurrentUserIdUseCase()
+            if (result.isOk) {
+                return result.component1()
+            }
+            Logger.d("AutoConnect: no userId, attempt=${attempt + 1}/$MAX_RETRY_ATTEMPTS, delaying ${delayMs}ms", tag = TAG)
+            delay(delayMs)
+            delayMs = (delayMs * 2).coerceAtMost(MAX_RETRY_DELAY_MS)
+        }
+        return null
+    }
+
     private companion object {
         private const val TAG = "AutoConnectLastDevice"
+        private const val MAX_RETRY_ATTEMPTS = 5
+        private const val INITIAL_RETRY_DELAY_MS = 500L
+        private const val MAX_RETRY_DELAY_MS = 8000L
     }
 }

@@ -11,6 +11,7 @@ import com.example.amulet.shared.domain.auth.usecase.SignUpUseCase
 import com.example.amulet.shared.domain.courses.usecase.*
 import com.example.amulet.shared.domain.devices.usecase.*
 import com.example.amulet.shared.domain.devices.repository.DeviceControlRepository
+import com.example.amulet.shared.domain.devices.repository.OtaRepository
 import com.example.amulet.shared.domain.hugs.DefaultSendHugUseCase
 import com.example.amulet.shared.domain.hugs.DeviceHugSendListener
 import com.example.amulet.shared.domain.hugs.ObserveHugsForPairUseCase
@@ -121,6 +122,7 @@ private val sharedModule = module {
 
     // Device repositories (bridge from Hilt)
     single { get<DeviceControlRepository>() }
+    single { get<OtaRepository>() }
 
     // Notifications UseCases
     factory { SyncPushTokenUseCase(get(), get()) }

@@ -37,6 +37,11 @@ class DeviceConnectionManagerImpl @Inject constructor(
             gattClient.discoverServices()
         } catch (e: Exception) {
             Logger.e("DeviceConnectionManager: connect failed", e, TAG)
+            try {
+                gattClient.disconnect()
+            } catch (disconnectError: Exception) {
+                Logger.e("DeviceConnectionManager: disconnect after failure also failed", disconnectError, TAG)
+            }
             if (autoReconnect) {
                 reconnectJob?.cancel()
                 reconnectJob = scope.launch {
@@ -45,6 +50,15 @@ class DeviceConnectionManagerImpl @Inject constructor(
                             Logger.d("DeviceConnectionManager: reconnection attempt $attempt", TAG)
                         }
                     ) {
+                        try {
+                            gattClient.disconnect()
+                        } catch (disconnectError: Exception) {
+                            Logger.e(
+                                "DeviceConnectionManager: disconnect before reconnection attempt failed",
+                                disconnectError,
+                                TAG
+                            )
+                        }
                         withTimeout(GattConstants.CONNECTION_TIMEOUT_MS) {
                             gattClient.connect(deviceAddress, autoReconnect = true)
                         }

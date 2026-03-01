@@ -88,7 +88,7 @@ class BleGattClientImpl @Inject constructor(
                 val success = performWrite(request)
                 request.result.complete(success)
             } catch (e: Exception) {
-                Logger.e("BleGattClient: write failed", e, TAG)
+                Logger.d("BleGattClient: write failed",  TAG)
                 request.result.complete(false)
             } finally {
                 isWriting = false
@@ -98,8 +98,16 @@ class BleGattClientImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     private suspend fun performWrite(request: WriteRequest): Boolean {
-        val gatt = bluetoothGatt ?: return false
-        val characteristic = findCharacteristicByUuid(request.uuid) ?: return false
+        val gatt = bluetoothGatt ?: run {
+            Logger.d("BleGattClient: performWrite failed - GATT is null", TAG)
+            return false
+        }
+        val characteristic = findCharacteristicByUuid(request.uuid) ?: run {
+            Logger.d("BleGattClient: performWrite failed - characteristic ${request.uuid} not found", TAG)
+            return false
+        }
+
+        Logger.d("BleGattClient: performWrite uuid=${request.uuid} dataSize=${request.data.size} responseRequired=${request.responseRequired}", TAG)
 
         val resultDeferred = CompletableDeferred<Int>()
         currentWriteResult = request.uuid to resultDeferred
@@ -115,16 +123,24 @@ class BleGattClientImpl @Inject constructor(
         }
 
         if (!started) {
+            Logger.d("BleGattClient: writeCharacteristic returned false (not started)", TAG)
             currentWriteResult = null
             return false
         }
 
+        Logger.d("BleGattClient: writeCharacteristic started, awaiting result...", TAG)
+
         return try {
             val status = withTimeoutOrNull(GattConstants.COMMAND_TIMEOUT_MS) {
                 resultDeferred.await()
-            } ?: return false
+            } ?: run {
+                Logger.d("BleGattClient: write timeout after ${GattConstants.COMMAND_TIMEOUT_MS}ms", TAG)
+                return false
+            }
 
-            status == BluetoothGatt.GATT_SUCCESS
+            val success = status == BluetoothGatt.GATT_SUCCESS
+            Logger.d("BleGattClient: write completed success=$success status=$status", TAG)
+            success
         } finally {
             currentWriteResult = null
         }
@@ -143,17 +159,24 @@ class BleGattClientImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun connect(address: String, autoReconnect: Boolean) {
+        Logger.d("BleGattClient: connect() called address=$address autoReconnect=$autoReconnect", TAG)
+
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            Logger.d("BleGattClient: Bluetooth adapter not available or disabled", TAG)
             throw IllegalStateException("Bluetooth adapter is not available or disabled")
         }
+
+        Logger.d("BleGattClient: Bluetooth adapter available, starting connection", TAG)
 
         this.currentDeviceAddress = address
         this.autoReconnect = autoReconnect
         _connectionState.value = ConnectionState.Connecting
+        Logger.d("BleGattClient: Connection state changed to Connecting", TAG)
 
         return suspendCancellableCoroutine { continuation ->
             try {
                 val device = bluetoothAdapter.getRemoteDevice(address)
+                Logger.d("BleGattClient: Got remote device for address=$address", TAG)
                 bluetoothGatt?.close()
                 bluetoothGatt = device.connectGatt(
                     context,
@@ -161,10 +184,16 @@ class BleGattClientImpl @Inject constructor(
                     createGattCallback(continuation),
                     BluetoothDevice.TRANSPORT_LE
                 )
+                Logger.d(
+                    "BleGattClient: connectGatt() called with autoConnect=$autoReconnect",
+                    TAG
+                )
                 continuation.invokeOnCancellation {
+                    Logger.d("BleGattClient: Connection cancelled, closing GATT", TAG)
                     bluetoothGatt?.close()
                 }
             } catch (e: Exception) {
+                Logger.d("BleGattClient: Exception during connectGatt",  TAG)
                 _connectionState.value = ConnectionState.Failed(e)
                 continuation.resumeWithException(e)
             }
@@ -173,11 +202,15 @@ class BleGattClientImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun disconnect() {
+        Logger.d("BleGattClient: disconnect() called", TAG)
         autoReconnect = false
         bluetoothGatt?.disconnect()
+        Logger.d("BleGattClient: GATT disconnect() called", TAG)
         bluetoothGatt?.close()
+        Logger.d("BleGattClient: GATT close() called", TAG)
         bluetoothGatt = null
         _connectionState.value = ConnectionState.Disconnected
+        Logger.d("BleGattClient: Connection state changed to Disconnected", TAG)
     }
 
     override suspend fun writeCharacteristic(
@@ -192,8 +225,15 @@ class BleGattClientImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun readCharacteristic(uuid: UUID): ByteArray? {
-        val gatt = bluetoothGatt ?: return null
-        val characteristic = findCharacteristicByUuid(uuid) ?: return null
+        Logger.d("BleGattClient: readCharacteristic() called uuid=$uuid", TAG)
+        val gatt = bluetoothGatt ?: run {
+            Logger.d("BleGattClient: readCharacteristic failed - GATT is null", TAG)
+            return null
+        }
+        val characteristic = findCharacteristicByUuid(uuid) ?: run {
+            Logger.d("BleGattClient: readCharacteristic failed - characteristic $uuid not found", TAG)
+            return null
+        }
 
         val resultDeferred = CompletableDeferred<ByteArray?>()
         currentReadResult = uuid to resultDeferred
@@ -203,13 +243,21 @@ class BleGattClientImpl @Inject constructor(
         }
 
         if (!started) {
+            Logger.d("BleGattClient: readCharacteristic returned false (not started)", TAG)
             currentReadResult = null
             return null
         }
 
+        Logger.d("BleGattClient: readCharacteristic started, awaiting result...", TAG)
+
         return try {
             withTimeoutOrNull(GattConstants.COMMAND_TIMEOUT_MS) {
                 resultDeferred.await()
+            }?.also {
+                Logger.d("BleGattClient: read completed dataSize=${it.size}", TAG)
+            } ?: run {
+                Logger.d("BleGattClient: read timeout after ${GattConstants.COMMAND_TIMEOUT_MS}ms", TAG)
+                null
             }
         } finally {
             currentReadResult = null
@@ -218,22 +266,41 @@ class BleGattClientImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override suspend fun discoverServices() {
+        Logger.d("BleGattClient: discoverServices() called", TAG)
         val gatt = bluetoothGatt ?: throw IllegalStateException("Not connected")
         
         val started = gatt.discoverServices()
         if (!started) {
+            Logger.d("BleGattClient: discoverServices() failed to start", TAG)
             throw IllegalStateException("Service discovery failed to start")
         }
+        Logger.d("BleGattClient: discoverServices() started, awaiting completion...", TAG)
 
-        withTimeout(GattConstants.DISCOVERY_TIMEOUT_MS) {
+        val state = withTimeout(GattConstants.DISCOVERY_TIMEOUT_MS) {
             _connectionState.first { it is ConnectionState.ServicesDiscovered || it is ConnectionState.Failed }
+        }
+        
+        when (state) {
+            is ConnectionState.ServicesDiscovered -> {
+                Logger.d("BleGattClient: discoverServices() completed with state=ServicesDiscovered", TAG)
+            }
+            is ConnectionState.Failed -> {
+                Logger.d("BleGattClient: discoverServices() failed: ${state.cause}", TAG)
+                throw IllegalStateException("Service discovery failed", state.cause)
+            }
+            else -> {
+                Logger.d("BleGattClient: discoverServices() unexpected state=$state", TAG)
+                throw IllegalStateException("Unexpected connection state after discovery: $state")
+            }
         }
     }
 
     override fun cleanup() {
+        Logger.d("BleGattClient: cleanup() called", TAG)
         pendingWrites.close()
         bluetoothGatt?.close()
         scope.cancel()
+        Logger.d("BleGattClient: cleanup() completed", TAG)
     }
 
     @SuppressLint("MissingPermission")
@@ -241,8 +308,10 @@ class BleGattClientImpl @Inject constructor(
         private var connectContinuationCompleted = false
 
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            Logger.d("BleGattClient: onConnectionStateChange status=$status newState=$newState", TAG)
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
+                    Logger.d("BleGattClient: STATE_CONNECTED, requesting MTU", TAG)
                     _connectionState.value = ConnectionState.Connected
                     _events.tryEmit(GattEvent.Connected)
                     if (!connectContinuationCompleted && continuation != null) {
@@ -252,6 +321,7 @@ class BleGattClientImpl @Inject constructor(
                     gatt.requestMtu(GattConstants.PREFERRED_MTU)
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
+                    Logger.d("BleGattClient: STATE_DISCONNECTED, cleaning up resources", TAG)
                     _connectionState.value = ConnectionState.Disconnected
                     _events.tryEmit(GattEvent.Disconnected)
                     // Очистка состояний для предотвращения фантомных блокировок
@@ -277,18 +347,28 @@ class BleGattClientImpl @Inject constructor(
         }
 
         override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+            Logger.d("BleGattClient: onMtuChanged mtu=$mtu status=$status servicesCount=${gatt.services.size}", TAG)
             _events.tryEmit(GattEvent.MtuChanged(mtu))
+            // Fallback: если сервисы уже в кэше - используем их
+            if (gatt.services.isNotEmpty()) {
+                Logger.d("BleGattClient: Services already cached (${gatt.services.size}), setting up notifications", TAG)
+                setupNotifications(gatt)
+            }
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            Logger.d("BleGattClient: onServicesDiscovered status=$status", TAG)
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Logger.d("BleGattClient: Services discovered successfully, setting up notifications", TAG)
                 setupNotifications(gatt)
             } else {
+                Logger.d("BleGattClient: Service discovery failed with status=$status", TAG)
                 _connectionState.value = ConnectionState.Failed(Exception("Service discovery failed"))
             }
         }
 
         private fun setupNotifications(gatt: BluetoothGatt) {
+            Logger.d("BleGattClient: setupNotifications() started", TAG)
             pendingNotificationDescriptors = 0
             notificationDescriptorQueue.clear()
 
@@ -298,10 +378,14 @@ class BleGattClientImpl @Inject constructor(
                 if (descriptor != null) {
                     descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                     notificationDescriptorQueue.add(descriptor)
+                    Logger.d("BleGattClient: Enqueued CCCD for characteristic=${characteristic.uuid}", TAG)
+                } else {
+                    Logger.d("BleGattClient: No CCCD descriptor for characteristic=${characteristic.uuid}", TAG)
                 }
             }
 
             val uartService = gatt.getService(GattConstants.NORDIC_UART_SERVICE_UUID)
+            Logger.d("BleGattClient: UART service=${if (uartService != null) "found" else "missing"}", TAG)
             val rxChar = uartService?.getCharacteristic(GattConstants.NORDIC_UART_RX_CHARACTERISTIC_UUID)
             rxChar?.let { 
                 gatt.setCharacteristicNotification(it, true)
@@ -309,6 +393,7 @@ class BleGattClientImpl @Inject constructor(
             }
 
             val batteryService = gatt.getService(GattConstants.BATTERY_SERVICE_UUID)
+            Logger.d("BleGattClient: Battery service=${if (batteryService != null) "found" else "missing"}", TAG)
             val batteryChar = batteryService?.getCharacteristic(GattConstants.BATTERY_LEVEL_CHARACTERISTIC_UUID)
             batteryChar?.let { 
                 gatt.setCharacteristicNotification(it, true)
@@ -316,6 +401,7 @@ class BleGattClientImpl @Inject constructor(
             }
 
             val amuletService = gatt.getService(GattConstants.AMULET_DEVICE_SERVICE_UUID)
+            Logger.d("BleGattClient: Amulet service=${if (amuletService != null) "found" else "missing"}", TAG)
             val statusChar = amuletService?.getCharacteristic(GattConstants.AMULET_DEVICE_STATUS_CHARACTERISTIC_UUID)
             statusChar?.let { 
                 gatt.setCharacteristicNotification(it, true)
@@ -329,8 +415,10 @@ class BleGattClientImpl @Inject constructor(
             }
 
             pendingNotificationDescriptors = notificationDescriptorQueue.size
+            Logger.d("BleGattClient: Total notification descriptors to write: $pendingNotificationDescriptors", TAG)
 
             if (pendingNotificationDescriptors == 0) {
+                Logger.d("BleGattClient: No descriptors to write, transitioning to ServicesDiscovered", TAG)
                 _connectionState.value = ConnectionState.ServicesDiscovered
             } else {
                 writeNextNotificationDescriptor(gatt)
@@ -338,9 +426,14 @@ class BleGattClientImpl @Inject constructor(
         }
 
         private fun writeNextNotificationDescriptor(gatt: BluetoothGatt) {
-            val next = notificationDescriptorQueue.peek() ?: return
+            val next = notificationDescriptorQueue.peek() ?: run {
+                Logger.d("BleGattClient: No more descriptors to write", TAG)
+                return
+            }
+            Logger.d("BleGattClient: Writing notification descriptor for characteristic=${next.characteristic.uuid}", TAG)
             val started = gatt.writeDescriptor(next)
             if (!started) {
+                Logger.d("BleGattClient: writeDescriptor failed to start, clearing queue", TAG)
                 notificationDescriptorQueue.clear()
                 pendingNotificationDescriptors = 0
                 _connectionState.value = ConnectionState.ServicesDiscovered
@@ -348,22 +441,27 @@ class BleGattClientImpl @Inject constructor(
         }
 
         override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+            Logger.d("BleGattClient: onDescriptorWrite characteristic=${descriptor.characteristic.uuid} status=$status", TAG)
             if (pendingNotificationDescriptors > 0) {
                 pendingNotificationDescriptors--
             }
             notificationDescriptorQueue.poll()
             if (notificationDescriptorQueue.isEmpty()) {
+                Logger.d("BleGattClient: All notification descriptors written, transitioning to ServicesDiscovered", TAG)
                 _connectionState.value = ConnectionState.ServicesDiscovered
             } else {
+                Logger.d("BleGattClient: Remaining descriptors to write: ${notificationDescriptorQueue.size}", TAG)
                 writeNextNotificationDescriptor(gatt)
             }
         }
 
         override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+            Logger.d("BleGattClient: onCharacteristicChanged uuid=${characteristic.uuid} dataSize=${characteristic.value.size}", TAG)
             _events.tryEmit(GattEvent.CharacteristicChanged(characteristic.uuid, characteristic.value))
         }
 
         override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            Logger.d("BleGattClient: onCharacteristicRead uuid=${characteristic.uuid} status=$status dataSize=${characteristic.value?.size ?: 0}", TAG)
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 _events.tryEmit(GattEvent.CharacteristicRead(characteristic.uuid, characteristic.value))
             }
@@ -377,6 +475,7 @@ class BleGattClientImpl @Inject constructor(
         }
 
         override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            Logger.d("BleGattClient: onCharacteristicWrite uuid=${characteristic.uuid} status=$status", TAG)
             _events.tryEmit(GattEvent.CharacteristicWrite(characteristic.uuid, status))
 
             val pending = currentWriteResult

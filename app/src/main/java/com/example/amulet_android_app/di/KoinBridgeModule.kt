@@ -142,6 +142,7 @@ object KoinBridgeModule {
         deviceControlRepository: DeviceControlRepository,
         deviceConnectionRepository: DeviceConnectionRepository,
         deviceRegistryRepository: DeviceRegistryRepository,
+        otaRepository: OtaRepository,
     ): Koin =
         GlobalContext.getOrNull() ?: startKoin {
             androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.NONE)
@@ -160,6 +161,7 @@ object KoinBridgeModule {
                 single<DeviceControlRepository> { deviceControlRepository }
                 single<DeviceConnectionRepository> { deviceConnectionRepository }
                 single<DeviceRegistryRepository> { deviceRegistryRepository }
+                single<OtaRepository> { otaRepository }
 
                 // Initialization UseCase
                 single<SeedLocalDataUseCase> {

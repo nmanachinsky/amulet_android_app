@@ -15,6 +15,7 @@ import com.example.amulet.shared.domain.practices.usecase.GetActiveSessionStream
 import com.example.amulet.shared.domain.practices.usecase.GetPracticeByIdUseCase
 import com.example.amulet.shared.domain.practices.usecase.StartPracticeUseCase
 import com.example.amulet.shared.domain.practices.usecase.StopSessionUseCase
+import com.example.amulet.shared.domain.devices.usecase.ObserveConnectedDeviceStatusUseCase
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.onFailure
@@ -41,6 +42,7 @@ class PracticeSessionManagerImpl(
     private val getActiveSessionStreamUseCase: GetActiveSessionStreamUseCase,
     private val getPracticeById: GetPracticeByIdUseCase,
     private val playbackEngine: DevicePlaybackEngine,
+    private val observeConnectedDeviceStatus: ObserveConnectedDeviceStatusUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val tickerIntervalMs: Long = 1000L
 ) : PracticeSessionManager {
@@ -76,6 +78,15 @@ class PracticeSessionManagerImpl(
             return@withContext Err(AppError.NotFound)
         }
 
+        val isDeviceConnected = observeConnectedDeviceStatus().firstOrNull() != null
+
+        if (isDeviceConnected) {
+            val playResult = playbackEngine.play(media)
+            if (playResult.isErr) {
+                return@withContext Err(playResult.error)
+            }
+        }
+
         val result = startPractice(
             practiceId = practiceId,
             intensity = initialIntensity,
@@ -84,15 +95,6 @@ class PracticeSessionManagerImpl(
             audioMode = null,
             source = source,
         )
-
-        result.onSuccess { session ->
-            scope.launch {
-                val playResult = playbackEngine.play(media)
-                playResult.onFailure { error ->
-                    Logger.d("startSession: playbackEngine.play failed error=$error", tag = TAG)
-                }
-            }
-        }
 
         result
     }

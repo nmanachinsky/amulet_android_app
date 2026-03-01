@@ -86,7 +86,7 @@ class DeviceControlRepositoryImpl @Inject constructor(
 
         if (patternIds.isEmpty()) return Ok(Unit)
 
-        val beginResult = sendCustomCommand("BEGIN_PRACTICE_SCRIPT:${practice.id}")
+        val beginResult = sendCustomCommand("BEGIN_PRACTICE:${practice.id}")
         beginResult.onFailure { return Err(it) }
 
         patternIds.forEachIndexed { index, patternId ->
@@ -94,12 +94,12 @@ class DeviceControlRepositoryImpl @Inject constructor(
             addResult.onFailure { return Err(it) }
         }
 
-        val commitResult = sendCustomCommand("COMMIT_PRACTICE_SCRIPT:${practice.id}")
+        val commitResult = sendCustomCommand("COMMIT_PRACTICE:${practice.id}")
         return commitResult.map { }
     }
 
     override suspend fun hasPracticeScript(practiceId: String): AppResult<Boolean> {
-        val result = sendCustomCommand("HAS_PRACTICE_SCRIPT:$practiceId")
+        val result = sendCustomCommand("HAS_PRACTICE:$practiceId")
         return result.fold(
             success = { Ok(true) },
             failure = { Err(it) }
@@ -107,7 +107,7 @@ class DeviceControlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun playPracticeScript(practiceId: String): AppResult<Unit> {
-        return sendCustomCommand("PLAY_PRACTICE_SCRIPT:$practiceId")
+        return sendCustomCommand("PLAY_PRACTICE:$practiceId")
     }
 
     override suspend fun clearDevice(): AppResult<Unit> {

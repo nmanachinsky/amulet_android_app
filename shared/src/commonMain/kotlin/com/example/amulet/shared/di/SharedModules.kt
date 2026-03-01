@@ -228,7 +228,8 @@ private val sharedModule = module {
             stopSessionUseCase = get(),
             getActiveSessionStreamUseCase = get(),
             getPracticeById = get(),
-            playbackEngine = get()
+            playbackEngine = get(),
+            observeConnectedDeviceStatus = get()
         )
     }
 

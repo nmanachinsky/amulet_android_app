@@ -115,7 +115,7 @@ fun AmuletCommand.toCommandString(): String = when (this) {
     is AmuletCommand.GetProtocolVersion -> "GET_PROTOCOL_VERSION"
     is AmuletCommand.Custom -> {
         if (parameters.isEmpty()) command
-        else "$command:${parameters.joinToString(",")}"
+        else "$command:${parameters.joinToString(":")}"
     }
 }
 

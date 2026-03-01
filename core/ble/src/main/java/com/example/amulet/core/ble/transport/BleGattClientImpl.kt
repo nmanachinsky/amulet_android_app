@@ -269,30 +269,54 @@ class BleGattClientImpl @Inject constructor(
         Logger.d("BleGattClient: discoverServices() called", TAG)
         val gatt = bluetoothGatt ?: throw IllegalStateException("Not connected")
         
-        val started = gatt.discoverServices()
-        if (!started) {
-            Logger.d("BleGattClient: discoverServices() failed to start", TAG)
-            throw IllegalStateException("Service discovery failed to start")
-        }
-        Logger.d("BleGattClient: discoverServices() started, awaiting completion...", TAG)
+        var attempt = 0
+        val maxAttempts = 5
+        var lastException: Exception? = null
+        
+        while (attempt < maxAttempts) {
+            attempt++
+            val timeoutMs = 2000L * (1 shl (attempt - 1))
+            
+            Logger.d("BleGattClient: discoverServices() attempt $attempt/$maxAttempts timeout=${timeoutMs}ms", TAG)
+            
+            val started = gatt.discoverServices()
+            if (!started) {
+                Logger.d("BleGattClient: discoverServices() failed to start", TAG)
+                throw IllegalStateException("Service discovery failed to start")
+            }
+            Logger.d("BleGattClient: discoverServices() started, awaiting completion...", TAG)
 
-        val state = withTimeout(GattConstants.DISCOVERY_TIMEOUT_MS) {
-            _connectionState.first { it is ConnectionState.ServicesDiscovered || it is ConnectionState.Failed }
+            try {
+                val state = withTimeout(timeoutMs) {
+                    _connectionState.first { it is ConnectionState.ServicesDiscovered || it is ConnectionState.Failed }
+                }
+                
+                when (state) {
+                    is ConnectionState.ServicesDiscovered -> {
+                        Logger.d("BleGattClient: discoverServices() completed with state=ServicesDiscovered", TAG)
+                        return
+                    }
+                    is ConnectionState.Failed -> {
+                        Logger.d("BleGattClient: Service discovery failed: ${state.cause}", TAG)
+                        throw IllegalStateException("Service discovery failed", state.cause)
+                    }
+                    else -> {
+                        Logger.d("BleGattClient: discoverServices() unexpected state=$state", TAG)
+                        throw IllegalStateException("Unexpected connection state after discovery: $state")
+                    }
+                }
+            } catch (e: Exception) {
+                lastException = e
+                Logger.d("BleGattClient: discoverServices() attempt $attempt failed: ${e.message}", TAG)
+                if (attempt < maxAttempts) {
+                    val delayMs = 2000L * (1 shl (attempt - 1))
+                    Logger.d("BleGattClient: retrying in ${delayMs}ms...", TAG)
+                    kotlinx.coroutines.delay(delayMs)
+                }
+            }
         }
         
-        when (state) {
-            is ConnectionState.ServicesDiscovered -> {
-                Logger.d("BleGattClient: discoverServices() completed with state=ServicesDiscovered", TAG)
-            }
-            is ConnectionState.Failed -> {
-                Logger.d("BleGattClient: discoverServices() failed: ${state.cause}", TAG)
-                throw IllegalStateException("Service discovery failed", state.cause)
-            }
-            else -> {
-                Logger.d("BleGattClient: discoverServices() unexpected state=$state", TAG)
-                throw IllegalStateException("Unexpected connection state after discovery: $state")
-            }
-        }
+        throw IllegalStateException("Service discovery failed after $maxAttempts attempts", lastException)
     }
 
     override fun cleanup() {

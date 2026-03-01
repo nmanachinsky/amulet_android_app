@@ -3,6 +3,7 @@ package com.example.amulet.core.ble.internal
 import com.example.amulet.core.ble.DeviceConnectionManager
 import com.example.amulet.core.ble.model.ConnectionState
 import com.example.amulet.core.ble.transport.BleGattClient
+import com.example.amulet.core.ble.internal.GattConstants
 import com.example.amulet.shared.core.logging.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,10 +32,11 @@ class DeviceConnectionManagerImpl @Inject constructor(
         Logger.d("DeviceConnectionManager: connect deviceAddress=$deviceAddress autoReconnect=$autoReconnect", TAG)
         
         try {
-            withTimeout(GattConstants.CONNECTION_TIMEOUT_MS) {
+            withTimeout(GattConstants.CONNECTION_TIMEOUT_MS + GattConstants.DISCOVERY_TIMEOUT_MS) {
                 gattClient.connect(deviceAddress, autoReconnect)
+                gattClient.discoverServices()
+                readDeviceState()
             }
-            gattClient.discoverServices()
         } catch (e: Exception) {
             Logger.e("DeviceConnectionManager: connect failed", e, TAG)
             try {
@@ -59,10 +61,11 @@ class DeviceConnectionManagerImpl @Inject constructor(
                                 TAG
                             )
                         }
-                        withTimeout(GattConstants.CONNECTION_TIMEOUT_MS) {
+                        withTimeout(GattConstants.CONNECTION_TIMEOUT_MS + GattConstants.DISCOVERY_TIMEOUT_MS) {
                             gattClient.connect(deviceAddress, autoReconnect = true)
+                            gattClient.discoverServices()
+                            readDeviceState()
                         }
-                        gattClient.discoverServices()
                     }
                 }
             }
@@ -75,6 +78,19 @@ class DeviceConnectionManagerImpl @Inject constructor(
         reconnectJob?.cancel()
         reconnectJob = null
         gattClient.disconnect()
+    }
+
+    private suspend fun readDeviceState() {
+        try {
+            gattClient.readCharacteristic(GattConstants.BATTERY_LEVEL_CHARACTERISTIC_UUID)
+        } catch (e: Exception) {
+            Logger.d("DeviceConnectionManager: failed to read battery level", TAG)
+        }
+        try {
+            gattClient.readCharacteristic(GattConstants.AMULET_DEVICE_STATUS_CHARACTERISTIC_UUID)
+        } catch (e: Exception) {
+            Logger.d("DeviceConnectionManager: failed to read device status", TAG)
+        }
     }
 
     companion object {

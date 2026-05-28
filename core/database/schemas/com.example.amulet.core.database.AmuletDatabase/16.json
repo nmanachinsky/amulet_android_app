@@ -1,0 +1,3121 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 16,
+    "identityHash": "b89a516652cde06d201c505556400c23",
+    "entities": [
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `displayName` TEXT, `avatarUrl` TEXT, `timezone` TEXT, `language` TEXT, `consents` TEXT, `createdAt` INTEGER, `updatedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "displayName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatarUrl",
+            "columnName": "avatarUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timezone",
+            "columnName": "timezone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "consents",
+            "columnName": "consents",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_users_updatedAt",
+            "unique": false,
+            "columnNames": [
+              "updatedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_users_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
+          }
+        ]
+      },
+      {
+        "tableName": "devices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ownerId` TEXT NOT NULL, `bleAddress` TEXT NOT NULL, `hardwareVersion` INTEGER NOT NULL, `firmwareVersion` TEXT, `name` TEXT, `batteryLevel` REAL, `status` TEXT, `settingsJson` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `lastConnectedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`ownerId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bleAddress",
+            "columnName": "bleAddress",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hardwareVersion",
+            "columnName": "hardwareVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firmwareVersion",
+            "columnName": "firmwareVersion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "batteryLevel",
+            "columnName": "batteryLevel",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "settingsJson",
+            "columnName": "settingsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "addedAt",
+            "columnName": "addedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastConnectedAt",
+            "columnName": "lastConnectedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_devices_ownerId",
+            "unique": false,
+            "columnNames": [
+              "ownerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_devices_ownerId` ON `${TABLE_NAME}` (`ownerId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "ownerId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "hugs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `fromUserId` TEXT, `toUserId` TEXT, `pairId` TEXT, `emotionColor` TEXT, `emotionPatternId` TEXT, `payloadJson` TEXT, `inReplyToHugId` TEXT, `deliveredAt` INTEGER, `status` TEXT NOT NULL DEFAULT 'SENT', `createdAt` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`), FOREIGN KEY(`fromUserId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`toUserId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`emotionPatternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromUserId",
+            "columnName": "fromUserId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "toUserId",
+            "columnName": "toUserId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pairId",
+            "columnName": "pairId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "emotionColor",
+            "columnName": "emotionColor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "emotionPatternId",
+            "columnName": "emotionPatternId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "inReplyToHugId",
+            "columnName": "inReplyToHugId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "deliveredAt",
+            "columnName": "deliveredAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'SENT'"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_hugs_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_createdAt` ON `${TABLE_NAME}` (`createdAt` DESC)"
+          },
+          {
+            "name": "index_hugs_fromUserId_createdAt",
+            "unique": false,
+            "columnNames": [
+              "fromUserId",
+              "createdAt"
+            ],
+            "orders": [
+              "ASC",
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_fromUserId_createdAt` ON `${TABLE_NAME}` (`fromUserId` ASC, `createdAt` DESC)"
+          },
+          {
+            "name": "index_hugs_toUserId_createdAt",
+            "unique": false,
+            "columnNames": [
+              "toUserId",
+              "createdAt"
+            ],
+            "orders": [
+              "ASC",
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_toUserId_createdAt` ON `${TABLE_NAME}` (`toUserId` ASC, `createdAt` DESC)"
+          },
+          {
+            "name": "index_hugs_emotionPatternId",
+            "unique": false,
+            "columnNames": [
+              "emotionPatternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_emotionPatternId` ON `${TABLE_NAME}` (`emotionPatternId`)"
+          },
+          {
+            "name": "index_hugs_pairId_createdAt",
+            "unique": false,
+            "columnNames": [
+              "pairId",
+              "createdAt"
+            ],
+            "orders": [
+              "ASC",
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_pairId_createdAt` ON `${TABLE_NAME}` (`pairId` ASC, `createdAt` DESC)"
+          },
+          {
+            "name": "index_hugs_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_hugs_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fromUserId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "toUserId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "patterns",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "emotionPatternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "patterns",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ownerId` TEXT, `kind` TEXT NOT NULL, `hardwareVersion` INTEGER NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `specJson` TEXT NOT NULL, `public` INTEGER NOT NULL, `reviewStatus` TEXT, `usageCount` INTEGER, `version` INTEGER NOT NULL, `createdAt` INTEGER, `updatedAt` INTEGER, `parentPatternId` TEXT, `segmentIndex` INTEGER, `segmentStartMs` INTEGER, `segmentEndMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`ownerId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hardwareVersion",
+            "columnName": "hardwareVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "specJson",
+            "columnName": "specJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "public",
+            "columnName": "public",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewStatus",
+            "columnName": "reviewStatus",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "usageCount",
+            "columnName": "usageCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "parentPatternId",
+            "columnName": "parentPatternId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "segmentIndex",
+            "columnName": "segmentIndex",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "segmentStartMs",
+            "columnName": "segmentStartMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "segmentEndMs",
+            "columnName": "segmentEndMs",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_patterns_ownerId",
+            "unique": false,
+            "columnNames": [
+              "ownerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_patterns_ownerId` ON `${TABLE_NAME}` (`ownerId`)"
+          },
+          {
+            "name": "index_patterns_public_hardwareVersion_kind",
+            "unique": false,
+            "columnNames": [
+              "public",
+              "hardwareVersion",
+              "kind"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_patterns_public_hardwareVersion_kind` ON `${TABLE_NAME}` (`public`, `hardwareVersion`, `kind`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "ownerId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tags_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pattern_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`patternId` TEXT NOT NULL, `tagId` TEXT NOT NULL, PRIMARY KEY(`patternId`, `tagId`), FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagId",
+            "columnName": "tagId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "patternId",
+            "tagId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pattern_tags_tagId",
+            "unique": false,
+            "columnNames": [
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pattern_tags_tagId` ON `${TABLE_NAME}` (`tagId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patterns",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "tags",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tagId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pattern_shares",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`patternId` TEXT NOT NULL, `userId` TEXT NOT NULL, PRIMARY KEY(`patternId`, `userId`), FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "patternId",
+            "userId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pattern_shares_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pattern_shares_userId` ON `${TABLE_NAME}` (`userId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patterns",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pattern_markers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`patternId` TEXT NOT NULL, `markersJson` TEXT NOT NULL, PRIMARY KEY(`patternId`), FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "markersJson",
+            "columnName": "markersJson",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "patternId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pattern_markers_patternId",
+            "unique": true,
+            "columnNames": [
+              "patternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pattern_markers_patternId` ON `${TABLE_NAME}` (`patternId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patterns",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pairs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `status` TEXT NOT NULL, `blockedBy` TEXT, `blockedAt` INTEGER, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "blockedBy",
+            "columnName": "blockedBy",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "blockedAt",
+            "columnName": "blockedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pairs_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pairs_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_pairs_createdAt",
+            "unique": false,
+            "columnNames": [
+              "createdAt"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pairs_createdAt` ON `${TABLE_NAME}` (`createdAt` DESC)"
+          },
+          {
+            "name": "index_pairs_blockedBy",
+            "unique": false,
+            "columnNames": [
+              "blockedBy"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pairs_blockedBy` ON `${TABLE_NAME}` (`blockedBy`)"
+          }
+        ]
+      },
+      {
+        "tableName": "pair_members",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`pairId` TEXT NOT NULL, `userId` TEXT NOT NULL, `joinedAt` INTEGER NOT NULL, `muted` INTEGER NOT NULL, `quietHoursStartMinutes` INTEGER, `quietHoursEndMinutes` INTEGER, `maxHugsPerHour` INTEGER, PRIMARY KEY(`pairId`, `userId`), FOREIGN KEY(`pairId`) REFERENCES `pairs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "pairId",
+            "columnName": "pairId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "joinedAt",
+            "columnName": "joinedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "muted",
+            "columnName": "muted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quietHoursStartMinutes",
+            "columnName": "quietHoursStartMinutes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "quietHoursEndMinutes",
+            "columnName": "quietHoursEndMinutes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "maxHugsPerHour",
+            "columnName": "maxHugsPerHour",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "pairId",
+            "userId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pair_members_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_members_userId` ON `${TABLE_NAME}` (`userId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pairs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pairId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pair_emotions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `pairId` TEXT NOT NULL, `name` TEXT NOT NULL, `colorHex` TEXT NOT NULL, `patternId` TEXT, `order` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`pairId`) REFERENCES `pairs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pairId",
+            "columnName": "pairId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colorHex",
+            "columnName": "colorHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pair_emotions_pairId",
+            "unique": false,
+            "columnNames": [
+              "pairId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_emotions_pairId` ON `${TABLE_NAME}` (`pairId`)"
+          },
+          {
+            "name": "index_pair_emotions_patternId",
+            "unique": false,
+            "columnNames": [
+              "patternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_emotions_patternId` ON `${TABLE_NAME}` (`patternId`)"
+          },
+          {
+            "name": "index_pair_emotions_pairId_order",
+            "unique": false,
+            "columnNames": [
+              "pairId",
+              "order"
+            ],
+            "orders": [
+              "ASC",
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_emotions_pairId_order` ON `${TABLE_NAME}` (`pairId` ASC, `order` ASC)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pairs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pairId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "patterns",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pair_quick_replies",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`pairId` TEXT NOT NULL, `userId` TEXT NOT NULL, `gestureType` TEXT NOT NULL, `emotionId` TEXT, PRIMARY KEY(`pairId`, `userId`, `gestureType`), FOREIGN KEY(`pairId`) REFERENCES `pairs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`emotionId`) REFERENCES `pair_emotions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "pairId",
+            "columnName": "pairId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gestureType",
+            "columnName": "gestureType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "emotionId",
+            "columnName": "emotionId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "pairId",
+            "userId",
+            "gestureType"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pair_quick_replies_pairId",
+            "unique": false,
+            "columnNames": [
+              "pairId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_quick_replies_pairId` ON `${TABLE_NAME}` (`pairId`)"
+          },
+          {
+            "name": "index_pair_quick_replies_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_quick_replies_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_pair_quick_replies_emotionId",
+            "unique": false,
+            "columnNames": [
+              "emotionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pair_quick_replies_emotionId` ON `${TABLE_NAME}` (`emotionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pairs",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pairId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "pair_emotions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "emotionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "practices",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `durationSec` INTEGER, `level` TEXT, `goal` TEXT, `tagsJson` TEXT NOT NULL, `contraindicationsJson` TEXT NOT NULL, `patternId` TEXT, `audioUrl` TEXT, `usageCount` INTEGER NOT NULL, `localesJson` TEXT NOT NULL, `createdAt` INTEGER, `updatedAt` INTEGER, `stepsJson` TEXT, `safetyNotesJson` TEXT, `scriptJson` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "durationSec",
+            "columnName": "durationSec",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "level",
+            "columnName": "level",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "goal",
+            "columnName": "goal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tagsJson",
+            "columnName": "tagsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contraindicationsJson",
+            "columnName": "contraindicationsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "audioUrl",
+            "columnName": "audioUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "usageCount",
+            "columnName": "usageCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localesJson",
+            "columnName": "localesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "stepsJson",
+            "columnName": "stepsJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "safetyNotesJson",
+            "columnName": "safetyNotesJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "scriptJson",
+            "columnName": "scriptJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practices_type",
+            "unique": false,
+            "columnNames": [
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practices_type` ON `${TABLE_NAME}` (`type`)"
+          },
+          {
+            "name": "index_practices_durationSec",
+            "unique": false,
+            "columnNames": [
+              "durationSec"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practices_durationSec` ON `${TABLE_NAME}` (`durationSec`)"
+          },
+          {
+            "name": "index_practices_patternId",
+            "unique": false,
+            "columnNames": [
+              "patternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practices_patternId` ON `${TABLE_NAME}` (`patternId`)"
+          },
+          {
+            "name": "index_practices_level",
+            "unique": false,
+            "columnNames": [
+              "level"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practices_level` ON `${TABLE_NAME}` (`level`)"
+          },
+          {
+            "name": "index_practices_goal",
+            "unique": false,
+            "columnNames": [
+              "goal"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practices_goal` ON `${TABLE_NAME}` (`goal`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patterns",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "practice_sessions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `practiceId` TEXT NOT NULL, `deviceId` TEXT, `status` TEXT NOT NULL, `startedAt` INTEGER NOT NULL, `completedAt` INTEGER, `durationSec` INTEGER, `completed` INTEGER NOT NULL DEFAULT 0, `intensity` REAL, `brightness` REAL, `moodBefore` TEXT, `moodAfter` TEXT, `feedbackNote` TEXT, `source` TEXT, `actualDurationSec` INTEGER, `vibrationLevel` REAL, `audioMode` TEXT, `rating` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`practiceId`) REFERENCES `practices`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`deviceId`) REFERENCES `devices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceId",
+            "columnName": "deviceId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startedAt",
+            "columnName": "startedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAt",
+            "columnName": "completedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "durationSec",
+            "columnName": "durationSec",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "completed",
+            "columnName": "completed",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "intensity",
+            "columnName": "intensity",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "brightness",
+            "columnName": "brightness",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "moodBefore",
+            "columnName": "moodBefore",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "moodAfter",
+            "columnName": "moodAfter",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedbackNote",
+            "columnName": "feedbackNote",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "actualDurationSec",
+            "columnName": "actualDurationSec",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "vibrationLevel",
+            "columnName": "vibrationLevel",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "audioMode",
+            "columnName": "audioMode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_sessions_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_sessions_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_practice_sessions_practiceId",
+            "unique": false,
+            "columnNames": [
+              "practiceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_sessions_practiceId` ON `${TABLE_NAME}` (`practiceId`)"
+          },
+          {
+            "name": "index_practice_sessions_deviceId",
+            "unique": false,
+            "columnNames": [
+              "deviceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_sessions_deviceId` ON `${TABLE_NAME}` (`deviceId`)"
+          },
+          {
+            "name": "index_practice_sessions_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_sessions_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_practice_sessions_startedAt",
+            "unique": false,
+            "columnNames": [
+              "startedAt"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_sessions_startedAt` ON `${TABLE_NAME}` (`startedAt` DESC)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "practices",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "practiceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "devices",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "deviceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "practice_categories",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `order` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_categories_order",
+            "unique": false,
+            "columnNames": [
+              "order"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_categories_order` ON `${TABLE_NAME}` (`order`)"
+          }
+        ]
+      },
+      {
+        "tableName": "practice_favorites",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `practiceId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`userId`, `practiceId`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userId",
+            "practiceId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_favorites_practiceId",
+            "unique": false,
+            "columnNames": [
+              "practiceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_favorites_practiceId` ON `${TABLE_NAME}` (`practiceId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "practice_schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `practiceId` TEXT NOT NULL, `courseId` TEXT, `planId` TEXT, `daysOfWeekJson` TEXT NOT NULL, `timeOfDay` TEXT NOT NULL, `reminderEnabled` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`planId`) REFERENCES `plans`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "courseId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "planId",
+            "columnName": "planId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "daysOfWeekJson",
+            "columnName": "daysOfWeekJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeOfDay",
+            "columnName": "timeOfDay",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderEnabled",
+            "columnName": "reminderEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_schedules_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_schedules_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_practice_schedules_practiceId",
+            "unique": false,
+            "columnNames": [
+              "practiceId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_schedules_practiceId` ON `${TABLE_NAME}` (`practiceId`)"
+          },
+          {
+            "name": "index_practice_schedules_planId",
+            "unique": false,
+            "columnNames": [
+              "planId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_schedules_planId` ON `${TABLE_NAME}` (`planId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "plans",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "planId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "user_preferences",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `defaultIntensity` REAL, `defaultBrightness` REAL, `goalsJson` TEXT NOT NULL, `interestsJson` TEXT NOT NULL, `preferredDurationsJson` TEXT NOT NULL, `defaultAudioMode` TEXT, `hugsDndEnabled` INTEGER, `defaultHugColorHex` TEXT, `defaultHugPatternId` TEXT, `defaultHugEmotionId` TEXT, PRIMARY KEY(`userId`))",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultIntensity",
+            "columnName": "defaultIntensity",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "defaultBrightness",
+            "columnName": "defaultBrightness",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "goalsJson",
+            "columnName": "goalsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interestsJson",
+            "columnName": "interestsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredDurationsJson",
+            "columnName": "preferredDurationsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultAudioMode",
+            "columnName": "defaultAudioMode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hugsDndEnabled",
+            "columnName": "hugsDndEnabled",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "defaultHugColorHex",
+            "columnName": "defaultHugColorHex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "defaultHugPatternId",
+            "columnName": "defaultHugPatternId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "defaultHugEmotionId",
+            "columnName": "defaultHugEmotionId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userId"
+          ]
+        }
+      },
+      {
+        "tableName": "plans",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `status` TEXT NOT NULL, `type` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_plans_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_plans_userId` ON `${TABLE_NAME}` (`userId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "user_practice_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `totalSessions` INTEGER NOT NULL, `totalDurationSec` INTEGER NOT NULL, `currentStreakDays` INTEGER NOT NULL, `bestStreakDays` INTEGER NOT NULL, `lastPracticeDate` INTEGER, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`userId`))",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalSessions",
+            "columnName": "totalSessions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalDurationSec",
+            "columnName": "totalDurationSec",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentStreakDays",
+            "columnName": "currentStreakDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bestStreakDays",
+            "columnName": "bestStreakDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastPracticeDate",
+            "columnName": "lastPracticeDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userId"
+          ]
+        }
+      },
+      {
+        "tableName": "user_badges",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `code` TEXT NOT NULL, `earnedAt` INTEGER NOT NULL, `metadataJson` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "earnedAt",
+            "columnName": "earnedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "metadataJson",
+            "columnName": "metadataJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_user_badges_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_user_badges_userId` ON `${TABLE_NAME}` (`userId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "practice_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `kind` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_tags_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_practice_tags_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ]
+      },
+      {
+        "tableName": "practice_tag_cross_ref",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`practiceId` TEXT NOT NULL, `tagId` TEXT NOT NULL, PRIMARY KEY(`practiceId`, `tagId`), FOREIGN KEY(`practiceId`) REFERENCES `practices`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`tagId`) REFERENCES `practice_tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagId",
+            "columnName": "tagId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "practiceId",
+            "tagId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_practice_tag_cross_ref_tagId",
+            "unique": false,
+            "columnNames": [
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_practice_tag_cross_ref_tagId` ON `${TABLE_NAME}` (`tagId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "practices",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "practiceId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "practice_tags",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tagId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "collections",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `code` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `order` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "collection_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `collectionId` TEXT NOT NULL, `type` TEXT NOT NULL, `practiceId` TEXT, `courseId` TEXT, `order` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`collectionId`) REFERENCES `collections`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "collectionId",
+            "columnName": "collectionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "courseId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_collection_items_collectionId",
+            "unique": false,
+            "columnNames": [
+              "collectionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_collection_items_collectionId` ON `${TABLE_NAME}` (`collectionId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "collections",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "collectionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "courses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT, `goal` TEXT, `level` TEXT, `rhythm` TEXT NOT NULL, `tagsJson` TEXT NOT NULL, `totalDurationSec` INTEGER, `modulesCount` INTEGER NOT NULL, `recommendedDays` INTEGER, `difficulty` TEXT, `coverUrl` TEXT, `createdAt` INTEGER, `updatedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "goal",
+            "columnName": "goal",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "level",
+            "columnName": "level",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rhythm",
+            "columnName": "rhythm",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagsJson",
+            "columnName": "tagsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalDurationSec",
+            "columnName": "totalDurationSec",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "modulesCount",
+            "columnName": "modulesCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recommendedDays",
+            "columnName": "recommendedDays",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "difficulty",
+            "columnName": "difficulty",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "coverUrl",
+            "columnName": "coverUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_courses_title",
+            "unique": false,
+            "columnNames": [
+              "title"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_courses_title` ON `${TABLE_NAME}` (`title`)"
+          },
+          {
+            "name": "index_courses_goal",
+            "unique": false,
+            "columnNames": [
+              "goal"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_courses_goal` ON `${TABLE_NAME}` (`goal`)"
+          },
+          {
+            "name": "index_courses_level",
+            "unique": false,
+            "columnNames": [
+              "level"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_courses_level` ON `${TABLE_NAME}` (`level`)"
+          }
+        ]
+      },
+      {
+        "tableName": "course_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `courseId` TEXT NOT NULL, `order` INTEGER NOT NULL, `type` TEXT NOT NULL, `practiceId` TEXT, `title` TEXT, `description` TEXT, `mandatory` INTEGER NOT NULL, `minDurationSec` INTEGER, `moduleId` TEXT, `unlockConditionJson` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`courseId`) REFERENCES `courses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`moduleId`) REFERENCES `course_modules`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "courseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "practiceId",
+            "columnName": "practiceId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mandatory",
+            "columnName": "mandatory",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minDurationSec",
+            "columnName": "minDurationSec",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "moduleId",
+            "columnName": "moduleId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "unlockConditionJson",
+            "columnName": "unlockConditionJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_course_items_courseId",
+            "unique": false,
+            "columnNames": [
+              "courseId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_course_items_courseId` ON `${TABLE_NAME}` (`courseId`)"
+          },
+          {
+            "name": "index_course_items_moduleId",
+            "unique": false,
+            "columnNames": [
+              "moduleId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_course_items_moduleId` ON `${TABLE_NAME}` (`moduleId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "courses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "courseId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "course_modules",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "moduleId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "course_modules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `courseId` TEXT NOT NULL, `order` INTEGER NOT NULL, `title` TEXT, `description` TEXT, `recommendedDayOffset` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`courseId`) REFERENCES `courses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "courseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "recommendedDayOffset",
+            "columnName": "recommendedDayOffset",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_course_modules_courseId_order",
+            "unique": false,
+            "columnNames": [
+              "courseId",
+              "order"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_course_modules_courseId_order` ON `${TABLE_NAME}` (`courseId`, `order`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "courses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "courseId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "course_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` TEXT NOT NULL, `courseId` TEXT NOT NULL, `completedItemIdsJson` TEXT NOT NULL, `currentItemId` TEXT, `percent` INTEGER NOT NULL, `totalTimeSec` INTEGER NOT NULL, `updatedAt` INTEGER, PRIMARY KEY(`userId`, `courseId`), FOREIGN KEY(`courseId`) REFERENCES `courses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "courseId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedItemIdsJson",
+            "columnName": "completedItemIdsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentItemId",
+            "columnName": "currentItemId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "percent",
+            "columnName": "percent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalTimeSec",
+            "columnName": "totalTimeSec",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userId",
+            "courseId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_course_progress_courseId",
+            "unique": false,
+            "columnNames": [
+              "courseId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_course_progress_courseId` ON `${TABLE_NAME}` (`courseId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "courses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "courseId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "rules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ownerId` TEXT NOT NULL, `triggerJson` TEXT NOT NULL, `actionJson` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `scheduleJson` TEXT, `createdAt` INTEGER, `updatedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`ownerId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerId",
+            "columnName": "ownerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerJson",
+            "columnName": "triggerJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actionJson",
+            "columnName": "actionJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "scheduleJson",
+            "columnName": "scheduleJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_rules_ownerId",
+            "unique": false,
+            "columnNames": [
+              "ownerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rules_ownerId` ON `${TABLE_NAME}` (`ownerId`)"
+          },
+          {
+            "name": "index_rules_enabled",
+            "unique": false,
+            "columnNames": [
+              "enabled"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_rules_enabled` ON `${TABLE_NAME}` (`enabled`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "ownerId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "telemetry_events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `type` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sentAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sentAt",
+            "columnName": "sentAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_telemetry_events_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_events_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_telemetry_events_type",
+            "unique": false,
+            "columnNames": [
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_events_type` ON `${TABLE_NAME}` (`type`)"
+          },
+          {
+            "name": "index_telemetry_events_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_events_timestamp` ON `${TABLE_NAME}` (`timestamp` DESC)"
+          },
+          {
+            "name": "index_telemetry_events_sentAt",
+            "unique": false,
+            "columnNames": [
+              "sentAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_telemetry_events_sentAt` ON `${TABLE_NAME}` (`sentAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "privacy_jobs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `type` TEXT NOT NULL, `status` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `expiresAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expiresAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_privacy_jobs_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_privacy_jobs_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_privacy_jobs_type",
+            "unique": false,
+            "columnNames": [
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_privacy_jobs_type` ON `${TABLE_NAME}` (`type`)"
+          },
+          {
+            "name": "index_privacy_jobs_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_privacy_jobs_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_privacy_jobs_expiresAt",
+            "unique": false,
+            "columnNames": [
+              "expiresAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_privacy_jobs_expiresAt` ON `${TABLE_NAME}` (`expiresAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "firmware_info",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `hardwareVersion` INTEGER NOT NULL, `versionName` TEXT NOT NULL, `versionCode` INTEGER NOT NULL, `downloadUrl` TEXT NOT NULL, `changelog` TEXT, `mandatory` INTEGER NOT NULL DEFAULT 0, `cachedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hardwareVersion",
+            "columnName": "hardwareVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionName",
+            "columnName": "versionName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "versionCode",
+            "columnName": "versionCode",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "downloadUrl",
+            "columnName": "downloadUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changelog",
+            "columnName": "changelog",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mandatory",
+            "columnName": "mandatory",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "cachedAt",
+            "columnName": "cachedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_firmware_info_hardwareVersion",
+            "unique": false,
+            "columnNames": [
+              "hardwareVersion"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_firmware_info_hardwareVersion` ON `${TABLE_NAME}` (`hardwareVersion`)"
+          },
+          {
+            "name": "index_firmware_info_versionCode",
+            "unique": false,
+            "columnNames": [
+              "versionCode"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_firmware_info_versionCode` ON `${TABLE_NAME}` (`versionCode`)"
+          }
+        ]
+      },
+      {
+        "tableName": "outbox_actions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `type` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `status` TEXT NOT NULL, `retryCount` INTEGER NOT NULL, `lastError` TEXT, `idempotencyKey` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `availableAt` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `targetEntityId` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadJson",
+            "columnName": "payloadJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "retryCount",
+            "columnName": "retryCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "lastError",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "idempotencyKey",
+            "columnName": "idempotencyKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "availableAt",
+            "columnName": "availableAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetEntityId",
+            "columnName": "targetEntityId",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_outbox_actions_status_availableAt_priority",
+            "unique": false,
+            "columnNames": [
+              "status",
+              "availableAt",
+              "priority"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_actions_status_availableAt_priority` ON `${TABLE_NAME}` (`status`, `availableAt`, `priority`)"
+          },
+          {
+            "name": "index_outbox_actions_type_status",
+            "unique": false,
+            "columnNames": [
+              "type",
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_actions_type_status` ON `${TABLE_NAME}` (`type`, `status`)"
+          },
+          {
+            "name": "index_outbox_actions_targetEntityId",
+            "unique": false,
+            "columnNames": [
+              "targetEntityId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_actions_targetEntityId` ON `${TABLE_NAME}` (`targetEntityId`)"
+          },
+          {
+            "name": "index_outbox_actions_idempotencyKey",
+            "unique": true,
+            "columnNames": [
+              "idempotencyKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_outbox_actions_idempotencyKey` ON `${TABLE_NAME}` (`idempotencyKey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "remote_keys",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tableName` TEXT NOT NULL, `partition` TEXT NOT NULL, `nextCursor` TEXT, `prevCursor` TEXT, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tableName",
+            "columnName": "tableName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partition",
+            "columnName": "partition",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextCursor",
+            "columnName": "nextCursor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "prevCursor",
+            "columnName": "prevCursor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_remote_keys_tableName_partition",
+            "unique": true,
+            "columnNames": [
+              "tableName",
+              "partition"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_remote_keys_tableName_partition` ON `${TABLE_NAME}` (`tableName`, `partition`)"
+          }
+        ]
+      },
+      {
+        "tableName": "user_mood_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `mood` TEXT NOT NULL, `source` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`userId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mood",
+            "columnName": "mood",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_user_mood_entries_userId_createdAt",
+            "unique": false,
+            "columnNames": [
+              "userId",
+              "createdAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_user_mood_entries_userId_createdAt` ON `${TABLE_NAME}` (`userId`, `createdAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "users",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b89a516652cde06d201c505556400c23')"
+    ]
+  }
+}

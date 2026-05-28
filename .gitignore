@@ -151,3 +151,4 @@ uncommitted_files.md
 docs/openapi_v1.txt
 gradle.properties
 scripts/
+/generate_code_doc.py

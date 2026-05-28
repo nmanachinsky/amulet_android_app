@@ -10,11 +10,13 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Refresh
+import android.widget.Toast
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +36,8 @@ fun DeviceDetailsRoute(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collectLatest { effect ->
@@ -44,12 +48,28 @@ fun DeviceDetailsRoute(
                 is DeviceDetailsSideEffect.DeviceUnclaimedNavigateBack -> {
                     onNavigateBack()
                 }
+                is DeviceDetailsSideEffect.SettingsSavedNavigateBack -> {
+                    // Toast переживает навигацию и виден уже на дашборде после возврата
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.device_details_save_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onNavigateBack()
+                }
+                is DeviceDetailsSideEffect.ShowError -> {
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.device_details_save_error),
+                        duration = SnackbarDuration.Short
+                    )
+                }
             }
         }
     }
 
     DeviceDetailsScreen(
         state = uiState,
+        snackbarHostState = snackbarHostState,
         onEvent = viewModel::handleEvent,
         onNavigateBack = onNavigateBack
     )
@@ -59,6 +79,7 @@ fun DeviceDetailsRoute(
 @Composable
 fun DeviceDetailsScreen(
     state: DeviceDetailsState,
+    snackbarHostState: SnackbarHostState,
     onEvent: (DeviceDetailsEvent) -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -88,15 +109,28 @@ fun DeviceDetailsScreen(
                         }
                     )
                 },
+                snackbarHost = {
+                    SnackbarHost(hostState = snackbarHostState)
+                },
                 floatingActionButton = {
                     if (!state.isLoading && state.device != null) {
                         ExtendedFloatingActionButton(
                             onClick = {
-                                // Используем текущее имя из текстового поля
-                                onEvent(DeviceDetailsEvent.SaveSettings(deviceName))
+                                // Игнорируем повторные нажатия во время сохранения
+                                if (!state.isSaving) {
+                                    onEvent(DeviceDetailsEvent.SaveSettings(deviceName))
+                                }
                             }
                         ) {
-                            Text(stringResource(id = R.string.device_details_save_button))
+                            if (state.isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = LocalContentColor.current
+                                )
+                            } else {
+                                Text(stringResource(id = R.string.device_details_save_button))
+                            }
                         }
                     }
                 }

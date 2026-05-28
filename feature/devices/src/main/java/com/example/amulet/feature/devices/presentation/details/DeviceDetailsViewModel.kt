@@ -187,10 +187,10 @@ class DeviceDetailsViewModel @Inject constructor(
         val currentDevice = _uiState.value.device ?: return
         val brightness = currentDevice.settings.brightness
         val haptics = currentDevice.settings.haptics
-        
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
-            // Сначала сохраняем все настройки в БД
+            // Локальное сохранение настроек — источник истины: его успех означает успех операции.
             updateDeviceSettingsUseCase(
                 deviceId = currentDevice.id,
                 name = name,
@@ -201,26 +201,18 @@ class DeviceDetailsViewModel @Inject constructor(
                     _uiState.update { it.copy(device = updatedDevice) }
                 }
                 .onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            isSaving = false,
-                            error = error
-                        )
-                    }
+                    _uiState.update { it.copy(isSaving = false, error = error) }
+                    _sideEffect.emit(DeviceDetailsSideEffect.ShowError(error))
                     return@launch
                 }
-        
-            // Затем отправляем яркость и вибрацию на устройство
-            val applyBrightnessResult = applyDeviceBrightnessUseCase(currentDevice.id, brightness)
-            val applyHapticsResult = applyDeviceHapticsUseCase(currentDevice.id, haptics)
-        
-            val applyError = applyBrightnessResult.component2() ?: applyHapticsResult.component2()
-            _uiState.update {
-                it.copy(
-                    isSaving = false,
-                    error = applyError
-                )
-            }
+
+            // Применение на физическое устройство — best-effort: если амулет офлайн,
+            // настройки уже сохранены локально и будут отправлены при следующем подключении.
+            applyDeviceBrightnessUseCase(currentDevice.id, brightness)
+            applyDeviceHapticsUseCase(currentDevice.id, haptics)
+
+            _uiState.update { it.copy(isSaving = false, error = null) }
+            _sideEffect.emit(DeviceDetailsSideEffect.SettingsSavedNavigateBack)
         }
     }
 

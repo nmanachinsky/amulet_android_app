@@ -112,6 +112,8 @@
     <string name="device_details_brightness_label">Яркость LED</string>
     <string name="device_details_haptics_label">Интенсивность вибрации</string>
     <string name="device_details_save_button">Сохранить</string>
+    <string name="device_details_save_success">Настройки сохранены</string>
+    <string name="device_details_save_error">Не удалось сохранить настройки</string>
     
     <string name="device_details_update_available">Доступно обновление</string>
     <string name="device_details_update_version">Версия %s</string>

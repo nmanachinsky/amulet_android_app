@@ -33,4 +33,6 @@ sealed interface DeviceDetailsEvent {
 sealed interface DeviceDetailsSideEffect {
     data class NavigateToOta(val deviceId: String) : DeviceDetailsSideEffect
     data object DeviceUnclaimedNavigateBack : DeviceDetailsSideEffect
+    data object SettingsSavedNavigateBack : DeviceDetailsSideEffect
+    data class ShowError(val error: AppError) : DeviceDetailsSideEffect
 }

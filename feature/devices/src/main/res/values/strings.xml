@@ -114,6 +114,8 @@
     <string name="device_details_brightness_label">LED Brightness</string>
     <string name="device_details_haptics_label">Vibration Strength</string>
     <string name="device_details_save_button">Save</string>
+    <string name="device_details_save_success">Settings saved</string>
+    <string name="device_details_save_error">Failed to save settings</string>
     
     <string name="device_details_update_available">Update Available</string>
     <string name="device_details_update_version">Version %s</string>

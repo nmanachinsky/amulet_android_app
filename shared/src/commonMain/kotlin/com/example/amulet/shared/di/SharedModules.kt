@@ -137,7 +137,7 @@ private val sharedModule = module {
     factory { ObserveDevicesUseCase(get(), get()) }
     factory { GetDeviceUseCase(get()) }
     factory { AddDeviceUseCase(get(), get()) }
-    factory { RemoveDeviceUseCase(get()) }
+    factory { RemoveDeviceUseCase(get(), get()) }
     factory { ScanForDevicesUseCase(get()) }
     factory { ConnectToDeviceUseCase(get(), get()) }
     factory { DisconnectFromDeviceUseCase(get()) }

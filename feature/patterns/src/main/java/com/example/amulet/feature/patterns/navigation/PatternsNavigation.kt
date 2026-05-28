@@ -30,7 +30,7 @@ object PatternsDestination {
     const val list: String = "patterns/list"
     const val picker: String = "patterns/picker"
     const val editor: String = "patterns/editor?patternId={patternId}"
-    const val preview: String = "patterns/preview/{patternId}"
+    const val preview: String = "patterns/preview?patternId={patternId}&key={key}"
     const val editorTimeline: String = "patterns/editor/timeline"
 }
 
@@ -55,7 +55,7 @@ fun NavController.navigateToPatternEditor(patternId: String? = null) {
 }
 
 fun NavController.navigateToPatternPreview(patternId: String) {
-    navigate("patterns/preview/$patternId") {
+    navigate("patterns/preview?patternId=$patternId") {
         launchSingleTop = true
     }
 }

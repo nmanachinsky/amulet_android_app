@@ -248,9 +248,9 @@ private fun QuickReplyCard(
             )
 
             QuickReplyRow(
-                title = stringResource(R.string.hugs_home_quick_reply_double_tap),
-                emotionName = resolveQuickReplyEmotionName(state, GestureType.DOUBLE_TAP),
-                onClick = { onIntent(HugsHomeIntent.OpenQuickReplyPicker(GestureType.DOUBLE_TAP)) },
+                title = stringResource(R.string.hugs_home_quick_reply_long_press),
+                emotionName = resolveQuickReplyEmotionName(state, GestureType.LONG_PRESS),
+                onClick = { onIntent(HugsHomeIntent.OpenQuickReplyPicker(GestureType.LONG_PRESS)) },
             )
         }
     }

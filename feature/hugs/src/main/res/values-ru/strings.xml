@@ -47,7 +47,6 @@
     <string name="hugs_home_default_emotion_card_not_set">Не задана</string>
 
     <string name="hugs_home_quick_reply_card_title">Быстрый ответ</string>
-    <string name="hugs_home_quick_reply_double_tap">Двойной тап</string>
     <string name="hugs_home_quick_reply_long_press">Долгое нажатие</string>
     <string name="hugs_home_quick_reply_picker_title">Выберите быстрый ответ</string>
     <string name="hugs_home_quick_reply_not_set">Не задан</string>

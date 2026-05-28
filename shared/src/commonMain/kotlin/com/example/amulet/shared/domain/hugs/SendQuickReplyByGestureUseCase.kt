@@ -2,6 +2,7 @@ package com.example.amulet.shared.domain.hugs
 
 import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.core.AppResult
+import com.example.amulet.shared.core.logging.Logger
 import com.example.amulet.shared.domain.hugs.model.GestureType
 import com.example.amulet.shared.domain.hugs.model.PairId
 import com.example.amulet.shared.domain.user.model.UserId
@@ -29,9 +30,12 @@ class SendQuickReplyByGestureUseCase(
         val replies = pairsRepository.observeQuickReplies(pairId, fromUserId)
             .first()
 
+        Logger.d(replies.toString(), "SendQuickReplyByGestureUseCase")
+        Logger.d(gestureType.name, "SendQuickReplyByGestureUseCase")
         val reply = replies.firstOrNull { it.gestureType == gestureType && it.emotionId != null }
             ?: return Err(AppError.Validation(mapOf("gestureType" to "Quick reply is not configured for this gesture")))
 
+        Logger.d("send", "SendQuickReplyByGestureUseCase")
         // Пока что не используем inReplyToHugId, так как контракт sendHug не поддерживает его явно.
         return sendHug(
             pairId = pairId,

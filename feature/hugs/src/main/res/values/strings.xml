@@ -46,7 +46,6 @@
     <string name="hugs_home_default_emotion_card_not_set">Not set</string>
 
     <string name="hugs_home_quick_reply_card_title">Quick reply</string>
-    <string name="hugs_home_quick_reply_double_tap">Double tap</string>
     <string name="hugs_home_quick_reply_long_press">Long press</string>
     <string name="hugs_home_quick_reply_picker_title">Choose quick reply</string>
     <string name="hugs_home_quick_reply_not_set">Not set</string>

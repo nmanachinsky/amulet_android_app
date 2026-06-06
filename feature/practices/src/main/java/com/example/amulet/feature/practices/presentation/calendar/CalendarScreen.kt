@@ -1,6 +1,10 @@
 package com.example.amulet.feature.practices.presentation.calendar
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
@@ -61,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.amulet.core.design.scaffold.LocalScaffoldState
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -84,6 +90,7 @@ import kotlinx.datetime.toLocalDateTime
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -472,21 +479,31 @@ private fun CalendarViewContent(
     state: CalendarState,
     onIntent: (CalendarIntent) -> Unit
 ) {
+    var isCalendarExpanded by remember { mutableStateOf(true) }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         CalendarHeader(
             currentMonth = state.currentMonth,
+            isExpanded = isCalendarExpanded,
+            onToggle = { isCalendarExpanded = !isCalendarExpanded },
             onPreviousMonth = { onIntent(CalendarIntent.ChangeMonth(-1)) },
             onNextMonth = { onIntent(CalendarIntent.ChangeMonth(1)) }
         )
 
-        CalendarGrid(
-            currentMonth = state.currentMonth,
-            selectedDate = state.selectedDate,
-            sessions = state.sessions,
-            onDateSelected = { onIntent(CalendarIntent.SelectDate(it)) }
-        )
+        AnimatedVisibility(
+            visible = isCalendarExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            CalendarGrid(
+                currentMonth = state.currentMonth,
+                selectedDate = state.selectedDate,
+                sessions = state.sessions,
+                onDateSelected = { onIntent(CalendarIntent.SelectDate(it)) }
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -513,9 +530,16 @@ private fun CalendarViewContent(
 @Composable
 fun CalendarHeader(
     currentMonth: YearMonth,
+    isExpanded: Boolean = true,
+    onToggle: () -> Unit = {},
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit
 ) {
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "calendar_chevron"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -526,11 +550,27 @@ fun CalendarHeader(
         IconButton(onClick = onPreviousMonth) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Пред. месяц")
         }
-        Text(
-            text = "${currentMonth.month.getDisplayName(full = true).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onToggle() }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "${currentMonth.month.getDisplayName(full = true).replaceFirstChar { it.uppercase() }} ${currentMonth.year}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(20.dp)
+                    .rotate(chevronRotation)
+            )
+        }
         IconButton(onClick = onNextMonth) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "След. месяц")
         }
@@ -582,7 +622,7 @@ fun CalendarGrid(
                         val date = LocalDate(currentMonth.year, currentMonth.month, dayOfMonth)
                         val isSelected = date == selectedDate
                         val hasSession = sessions.any { 
-                             val sessionDate = kotlinx.datetime.Instant.fromEpochMilliseconds(it.scheduledTime)
+                             val sessionDate = Instant.fromEpochMilliseconds(it.scheduledTime)
                                  .toLocalDateTime(TimeZone.currentSystemDefault()).date
                              sessionDate == date
                         }
@@ -632,7 +672,7 @@ fun CalendarGrid(
     }
 }
 
-@OptIn(kotlin.time.ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 @Composable
 fun SessionList(
     selectedDate: LocalDate,
@@ -661,7 +701,7 @@ fun SessionList(
     }
 }
 
-@OptIn(kotlin.time.ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun TimelineSessionItem(
     session: ScheduledSession,
@@ -775,12 +815,7 @@ fun SessionItem(
 ) {
     val timeFormatter = remember { java.text.SimpleDateFormat("HH:mm", Locale.getDefault()) }
     val time = timeFormatter.format(java.util.Date(session.scheduledTime))
-    
-    // Check if session is starting soon (within 15 minutes)
-    val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
-    val timeUntilSession = session.scheduledTime - now
-    val canStart = timeUntilSession <= 15 * 60 * 1000 && timeUntilSession > 0 // 15 minutes
-    
+
     var showCancelDialog by remember { mutableStateOf(false) }
     
     // Status color
@@ -1024,7 +1059,7 @@ private fun ScheduleListView(
     // Группировка ближайших сессий по датам
     val sessionsByDate = remember(upcomingSessions) {
         upcomingSessions.groupBy {
-            kotlinx.datetime.Instant.fromEpochMilliseconds(it.scheduledTime)
+            Instant.fromEpochMilliseconds(it.scheduledTime)
                 .toLocalDateTime(timeZone).date
         }
     }

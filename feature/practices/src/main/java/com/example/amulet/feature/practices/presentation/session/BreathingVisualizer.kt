@@ -41,6 +41,9 @@ fun BreathingVisualizer(
     val phase = remember(currentStep?.title) {
         val title = currentStep?.title?.lowercase().orEmpty()
         when {
+            // "Активная фаза" и "Пауза" проверяем первыми -- они не содержат вдох/выдох.
+            title.contains("актив") || title.contains("active") -> BreathingPhase.ACTIVE
+            title.contains("пауза") || title.contains("pause") -> BreathingPhase.PAUSE
             title.contains("вдох") || title.contains("inhale") -> BreathingPhase.INHALE
             title.contains("выдох") || title.contains("exhale") -> BreathingPhase.EXHALE
             title.contains("задержка") || title.contains("hold") -> BreathingPhase.HOLD
@@ -74,6 +77,8 @@ fun BreathingVisualizer(
         BreathingPhase.INHALE -> inhaleColors
         BreathingPhase.EXHALE -> exhaleColors
         BreathingPhase.HOLD -> holdColors
+        BreathingPhase.ACTIVE -> exhaleColors // тёплые, энергичные тона
+        BreathingPhase.PAUSE -> holdColors // спокойное удержание
         BreathingPhase.DEFAULT -> defaultColors
     }
 
@@ -105,6 +110,17 @@ fun BreathingVisualizer(
         label = "defaultScale"
     )
 
+    // Быстрый пульс для активной фазы бодрящего дыхания.
+    val activeScale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(350, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "activeScale"
+    )
+
     val stepDurationSec = (currentStep?.durationSec ?: 4).coerceAtLeast(1)
     val stepDurationMs = stepDurationSec * 1000
 
@@ -112,12 +128,16 @@ fun BreathingVisualizer(
         BreathingPhase.INHALE -> 1.3f
         BreathingPhase.EXHALE -> 0.75f
         BreathingPhase.HOLD -> 1.0f
+        BreathingPhase.PAUSE -> 0.7f // пустые лёгкие, удержание паузы
+        BreathingPhase.ACTIVE -> activeScale
         BreathingPhase.DEFAULT -> defaultScale
     }
 
+    // Для самоанимирующихся фаз (быстрый пульс / дефолт) мгновенно следуем за значением.
+    val isSelfAnimating = phase == BreathingPhase.DEFAULT || phase == BreathingPhase.ACTIVE
     val animatedScale by animateFloatAsState(
         targetValue = targetScale,
-        animationSpec = if (phase == BreathingPhase.DEFAULT) {
+        animationSpec = if (isSelfAnimating) {
             tween(durationMillis = 0, easing = FastOutSlowInEasing)
         } else {
             tween(durationMillis = stepDurationMs, easing = FastOutSlowInEasing)
@@ -327,5 +347,5 @@ private fun formatTime(seconds: Int): String {
 }
 
 private enum class BreathingPhase {
-    INHALE, EXHALE, HOLD, DEFAULT
+    INHALE, EXHALE, HOLD, PAUSE, ACTIVE, DEFAULT
 }

@@ -12,4 +12,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:telemetry"))
     implementation(libs.kotlinx.datetime)
+
+    // Только для тестов: проверка межмодульной целостности ссылок практик на паттерны.
+    testImplementation(project(":data:patterns"))
 }

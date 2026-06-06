@@ -30,7 +30,7 @@ fun PracticeSeed.toEntity(): PracticeEntity = PracticeEntity(
     updatedAt = updatedAt,
     stepsJson = if (steps.isEmpty()) null else steps.toJsonArrayString(),
     safetyNotesJson = if (safetyNotes.isEmpty()) null else safetyNotes.toJsonArrayString(),
-    scriptJson = PracticeScriptSeedData.getScriptForPractice(id, durationSec)?.let { Json.encodeToString(it) }
+    scriptJson = PracticeScriptSeedData.getScriptForPractice(id)?.let { Json.encodeToString(it) }
 )
 
 fun PracticeSeed.toCategoryEntity(): PracticeCategoryEntity = PracticeCategoryEntity(

@@ -113,6 +113,9 @@ class PairsLocalDataSourceImpl @Inject constructor(
         }
     }
 
+    override suspend fun getAllMembers(): List<PairMemberEntity> =
+        pairDao.getAllMembers()
+
     override suspend fun deletePair(pairId: String) {
         transactionRunner.runInTransaction {
             pairDao.deleteEmotions(pairId)

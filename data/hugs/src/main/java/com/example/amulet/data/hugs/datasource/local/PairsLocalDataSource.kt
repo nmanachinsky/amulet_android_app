@@ -46,5 +46,13 @@ interface PairsLocalDataSource {
 
     suspend fun replaceAllPairs(pairs: List<PairEntity>, members: List<PairMemberEntity>)
 
+    /**
+     * Возвращает всех участников пар из локального кэша.
+     *
+     * Используется при синхронизации, чтобы сохранить локальные настройки участника
+     * (mute, тихие часы, лимиты), которые не приходят с сервера.
+     */
+    suspend fun getAllMembers(): List<PairMemberEntity>
+
     suspend fun deletePair(pairId: String)
 }

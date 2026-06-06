@@ -75,40 +75,44 @@ class HugsSettingsViewModel @Inject constructor(
                 .collect { (user, pair, extra) ->
                     val (globalDnd, memberSettings) = extra
                     _state.update { current ->
-                        val shouldApplyMemberSettings = current.isLoading
+                        // Инициализируем поля ввода один раз — когда из БД пришли реальные
+                        // настройки участника. Пустую стартовую эмиссию stateIn пропускаем,
+                        // иначе поля так и остаются пустыми после сохранения.
+                        val shouldInitInputs = !current.hasInitializedInputs && memberSettings != null
 
                         current.copy(
                             isLoading = false,
                             currentUser = user,
                             activePair = pair,
                             globalDndEnabled = globalDnd,
-                            isMuted = if (shouldApplyMemberSettings) {
-                                memberSettings?.muted ?: false
+                            hasInitializedInputs = current.hasInitializedInputs || shouldInitInputs,
+                            isMuted = if (shouldInitInputs) {
+                                memberSettings.muted
                             } else {
                                 current.isMuted
                             },
-                            quietHoursStartMinutes = if (shouldApplyMemberSettings) {
-                                memberSettings?.quietHoursStartMinutes
+                            quietHoursStartMinutes = if (shouldInitInputs) {
+                                memberSettings.quietHoursStartMinutes
                             } else {
                                 current.quietHoursStartMinutes
                             },
-                            quietHoursEndMinutes = if (shouldApplyMemberSettings) {
-                                memberSettings?.quietHoursEndMinutes
+                            quietHoursEndMinutes = if (shouldInitInputs) {
+                                memberSettings.quietHoursEndMinutes
                             } else {
                                 current.quietHoursEndMinutes
                             },
-                            quietHoursStartText = if (shouldApplyMemberSettings) {
-                                memberSettings?.quietHoursStartMinutes?.let { minutesToText(it) } ?: ""
+                            quietHoursStartText = if (shouldInitInputs) {
+                                memberSettings.quietHoursStartMinutes?.let { minutesToText(it) } ?: ""
                             } else {
                                 current.quietHoursStartText
                             },
-                            quietHoursEndText = if (shouldApplyMemberSettings) {
-                                memberSettings?.quietHoursEndMinutes?.let { minutesToText(it) } ?: ""
+                            quietHoursEndText = if (shouldInitInputs) {
+                                memberSettings.quietHoursEndMinutes?.let { minutesToText(it) } ?: ""
                             } else {
                                 current.quietHoursEndText
                             },
-                            maxHugsPerHourText = if (shouldApplyMemberSettings) {
-                                memberSettings?.maxHugsPerHour?.toString() ?: ""
+                            maxHugsPerHourText = if (shouldInitInputs) {
+                                memberSettings.maxHugsPerHour?.toString() ?: ""
                             } else {
                                 current.maxHugsPerHourText
                             },

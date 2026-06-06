@@ -17,6 +17,8 @@ data class HugsSettingsState(
     val quietHoursStartText: String = "",
     val quietHoursEndText: String = "",
     val maxHugsPerHourText: String = "",
+    // Поля ввода инициализируем сохранёнными настройками один раз, далее их владелец — пользователь
+    val hasInitializedInputs: Boolean = false,
 )
 
 sealed class HugsSettingsIntent {

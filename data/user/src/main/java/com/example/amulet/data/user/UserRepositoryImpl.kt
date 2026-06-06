@@ -74,7 +74,12 @@ class UserRepositoryImpl @Inject constructor(
                 val existingResult = localDataSource.findById(dto.id)
                 val existing = existingResult.value
                 val mergedAvatarUrl = mergeAvatarUrl(dto, existing)
-                val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
+                // timezone и language — локальные настройки: не перезаписываем их данными сервера
+                val entity = mapper.toEntity(dto).copy(
+                    avatarUrl = mergedAvatarUrl,
+                    timezone = existing?.timezone,
+                    language = existing?.language,
+                )
                 localDataSource.upsert(entity)
                 Ok(dto)
             },
@@ -88,11 +93,10 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun updateProfile(request: UpdateUserProfileRequest): AppResult<User> {
         Logger.d("updateProfile: starting", TAG)
+        // timezone и language не отправляем: это локальные настройки (updateLocalPreferences)
         val dtoRequest = UserUpdateRequestDto(
             displayName = request.displayName,
             avatarUrl = request.avatarUrl,
-            timezone = request.timezone,
-            language = request.language,
             consents = null,
         )
 
@@ -102,10 +106,15 @@ class UserRepositoryImpl @Inject constructor(
                 val existing = existingResult.value
                 val mergedAvatarUrl = dto.avatarUrl ?: request.avatarUrl ?: existing?.avatarUrl
 
-                val user = mapper.toDomain(dto).copy(avatarUrl = mergedAvatarUrl)
-                val entity = mapper.toEntity(dto).copy(avatarUrl = mergedAvatarUrl)
+                // сохраняем локальные timezone/language, не подменяя их значениями сервера
+                val entity = mapper.toEntity(dto).copy(
+                    avatarUrl = mergedAvatarUrl,
+                    timezone = existing?.timezone,
+                    language = existing?.language,
+                )
 
                 localDataSource.upsert(entity)
+                val user = mapper.toDomain(entity)
                 Logger.i("updateProfile: success userId=${user.id.value}", TAG)
                 Ok(user)
             },
@@ -114,6 +123,26 @@ class UserRepositoryImpl @Inject constructor(
                 Err(error)
             }
         )
+    }
+
+    override suspend fun updateLocalPreferences(
+        userId: UserId,
+        timezone: String?,
+        language: String?,
+    ): AppResult<Unit> {
+        Logger.d("updateLocalPreferences: userId=${userId.value}", TAG)
+        val existing = localDataSource.findById(userId.value).value
+            ?: run {
+                Logger.e("updateLocalPreferences: user not cached userId=${userId.value}", tag = TAG)
+                return Err(AppError.NotFound)
+            }
+
+        val updated = existing.copy(timezone = timezone, language = language)
+        return localDataSource.upsert(updated).also { result ->
+            if (result.isOk) {
+                Logger.i("updateLocalPreferences: success userId=${userId.value}", TAG)
+            }
+        }
     }
 
     override fun getUserConsentsStream(userId: UserId): Flow<UserConsents> {

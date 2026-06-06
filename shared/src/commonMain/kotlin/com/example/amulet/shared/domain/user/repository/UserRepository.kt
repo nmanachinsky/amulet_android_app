@@ -33,6 +33,18 @@ interface UserRepository {
     suspend fun updateProfile(request: UpdateUserProfileRequest): AppResult<User>
 
     /**
+     * Обновляет локальные настройки пользователя (часовой пояс, язык).
+     *
+     * Эти значения хранятся только в локальном кэше: они не отправляются на backend
+     * и не перезаписываются ответами сервера при загрузке/обновлении профиля.
+     */
+    suspend fun updateLocalPreferences(
+        userId: UserId,
+        timezone: String?,
+        language: String?,
+    ): AppResult<Unit>
+
+    /**
      * Возвращает поток согласий пользователя.
      */
     fun getUserConsentsStream(userId: UserId): Flow<UserConsents>

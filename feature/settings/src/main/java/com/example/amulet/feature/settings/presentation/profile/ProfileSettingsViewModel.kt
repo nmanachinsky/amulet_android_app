@@ -2,9 +2,11 @@ package com.example.amulet.feature.settings.presentation.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.amulet.shared.core.AppResult
+import com.example.amulet.shared.core.AppError
 import com.example.amulet.shared.domain.user.model.UpdateUserProfileRequest
+import com.example.amulet.shared.domain.user.model.User
 import com.example.amulet.shared.domain.user.usecase.ObserveCurrentUserUseCase
+import com.example.amulet.shared.domain.user.usecase.UpdateLocalUserPreferencesUseCase
 import com.example.amulet.shared.domain.user.usecase.UpdateUserProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -22,6 +24,7 @@ import kotlinx.coroutines.launch
 class ProfileSettingsViewModel @Inject constructor(
     private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private val updateLocalUserPreferencesUseCase: UpdateLocalUserPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileSettingsState())
@@ -94,43 +97,72 @@ class ProfileSettingsViewModel @Inject constructor(
         val currentState = _state.value
         val user = currentState.currentUser ?: return
 
-        val trimmedName = currentState.displayNameInput.trim()
-        val trimmedAvatarUrl = currentState.avatarUrlInput.trim()
         val trimmedTimezone = currentState.timezoneInput.trim()
         val trimmedLanguage = currentState.languageInput.trim()
 
-        val request = UpdateUserProfileRequest(
-            displayName = trimmedName.takeIf { it != (user.displayName ?: "") },
-            avatarUrl = trimmedAvatarUrl.takeIf { it != (user.avatarUrl ?: "") },
-            timezone = trimmedTimezone.takeIf { it != (user.timezone ?: "") },
-            language = trimmedLanguage.takeIf { it != (user.language ?: "") },
+        // Серверные поля профиля (имя, аватар) — синхронизируются с backend
+        val profileRequest = UpdateUserProfileRequest(
+            displayName = currentState.displayNameInput.trim().takeIf { it != (user.displayName ?: "") },
+            avatarUrl = currentState.avatarUrlInput.trim().takeIf { it != (user.avatarUrl ?: "") },
         )
+        val hasProfileChanges = profileRequest.displayName != null || profileRequest.avatarUrl != null
 
-        if (
-            request.displayName == null &&
-            request.avatarUrl == null &&
-            request.timezone == null &&
-            request.language == null
-        ) {
+        // Локальные настройки (часовой пояс, язык) — только на устройстве
+        val hasLocalPreferenceChanges =
+            trimmedTimezone != (user.timezone ?: "") || trimmedLanguage != (user.language ?: "")
+
+        if (!hasProfileChanges && !hasLocalPreferenceChanges) {
             emitEffect(ProfileSettingsEffect.NavigateBack)
             return
         }
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
-            val result = updateUserProfileUseCase(request)
+
+            val error = saveChanges(
+                user = user,
+                profileRequest = profileRequest,
+                hasProfileChanges = hasProfileChanges,
+                hasLocalPreferenceChanges = hasLocalPreferenceChanges,
+                timezone = trimmedTimezone,
+                language = trimmedLanguage,
+            )
+
             _state.update { it.copy(isSaving = false) }
-            handleResult(result)
+
+            if (error != null) {
+                emitEffect(ProfileSettingsEffect.ShowError(error))
+            } else {
+                emitEffect(ProfileSettingsEffect.NavigateBack)
+            }
         }
     }
 
-    private fun handleResult(result: AppResult<*>) {
-        val error = result.component2()
-        if (error != null) {
-            emitEffect(ProfileSettingsEffect.ShowError(error))
-        } else {
-            emitEffect(ProfileSettingsEffect.NavigateBack)
+    /**
+     * Сохраняет изменения и возвращает первую возникшую ошибку либо null при успехе.
+     *
+     * Локальные настройки сохраняем первыми: они не зависят от сети и не должны
+     * теряться из-за возможной ошибки серверного обновления профиля.
+     */
+    private suspend fun saveChanges(
+        user: User,
+        profileRequest: UpdateUserProfileRequest,
+        hasProfileChanges: Boolean,
+        hasLocalPreferenceChanges: Boolean,
+        timezone: String,
+        language: String,
+    ): AppError? {
+        if (hasLocalPreferenceChanges) {
+            val localError = updateLocalUserPreferencesUseCase(user.id, timezone, language).component2()
+            if (localError != null) return localError
         }
+
+        if (hasProfileChanges) {
+            val profileError = updateUserProfileUseCase(profileRequest).component2()
+            if (profileError != null) return profileError
+        }
+
+        return null
     }
 
     private fun emitEffect(effect: ProfileSettingsEffect) {

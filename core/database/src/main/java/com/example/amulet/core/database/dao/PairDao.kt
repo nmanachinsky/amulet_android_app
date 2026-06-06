@@ -55,6 +55,9 @@ interface PairDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMembers(members: List<PairMemberEntity>)
 
+    @Query("SELECT * FROM pair_members")
+    suspend fun getAllMembers(): List<PairMemberEntity>
+
     @Query(
         "UPDATE pair_members SET muted = :muted, quietHoursStartMinutes = :quietStart, " +
             "quietHoursEndMinutes = :quietEnd, maxHugsPerHour = :maxHugsPerHour " +

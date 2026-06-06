@@ -113,18 +113,25 @@ class PairsRepositoryImpl @Inject constructor(
                     )
                 }
 
+                // Локальные настройки участника (mute, тихие часы, лимиты) храним только на
+                // устройстве: сервер их не отдаёт, поэтому переносим существующие значения,
+                // чтобы синхронизация пар их не затирала дефолтами.
+                val existingSettings = localDataSource.getAllMembers()
+                    .associateBy { it.pairId to it.userId }
+
                 val memberEntities = pairs.flatMap { dto ->
                     val joinedAt = dto.createdAt?.value ?: System.currentTimeMillis()
                     val memberIds = dto.memberIds.ifEmpty { dto.memberIdsSnake }
                     memberIds.map { userId ->
+                        val existing = existingSettings[dto.id to userId]
                         PairMemberEntity(
                             pairId = dto.id,
                             userId = userId,
                             joinedAt = joinedAt,
-                            muted = false,
-                            quietHoursStartMinutes = null,
-                            quietHoursEndMinutes = null,
-                            maxHugsPerHour = null,
+                            muted = existing?.muted ?: false,
+                            quietHoursStartMinutes = existing?.quietHoursStartMinutes,
+                            quietHoursEndMinutes = existing?.quietHoursEndMinutes,
+                            maxHugsPerHour = existing?.maxHugsPerHour,
                         )
                     }
                 }

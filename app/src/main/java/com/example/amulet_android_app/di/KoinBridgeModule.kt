@@ -79,6 +79,7 @@ import com.example.amulet.shared.domain.user.repository.UserRepository
 import com.example.amulet.shared.domain.user.usecase.FetchUserProfileUseCase
 import com.example.amulet.shared.domain.user.usecase.ObserveCurrentUserUseCase
 import com.example.amulet.shared.domain.user.usecase.ObserveUserByIdUseCase
+import com.example.amulet.shared.domain.user.usecase.UpdateLocalUserPreferencesUseCase
 import com.example.amulet.shared.domain.user.usecase.UpdateUserProfileUseCase
 import com.example.amulet.shared.domain.notifications.SyncPushTokenUseCase
 import com.example.amulet.shared.domain.privacy.usecase.GetUserConsentsUseCase
@@ -274,6 +275,9 @@ object KoinBridgeModule {
 
     @Provides
     fun provideUpdateUserProfileUseCase(koin: Koin): UpdateUserProfileUseCase = koin.get()
+
+    @Provides
+    fun provideUpdateLocalUserPreferencesUseCase(koin: Koin): UpdateLocalUserPreferencesUseCase = koin.get()
 
     @Provides
     fun provideObserveUserByIdUseCase(koin: Koin): ObserveUserByIdUseCase = koin.get()

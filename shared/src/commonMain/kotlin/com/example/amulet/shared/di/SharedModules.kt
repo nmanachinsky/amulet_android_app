@@ -56,6 +56,7 @@ import com.example.amulet.shared.domain.practices.usecase.*
 import com.example.amulet.shared.domain.user.usecase.FetchUserProfileUseCase
 import com.example.amulet.shared.domain.user.usecase.ObserveCurrentUserUseCase
 import com.example.amulet.shared.domain.user.usecase.ObserveUserByIdUseCase
+import com.example.amulet.shared.domain.user.usecase.UpdateLocalUserPreferencesUseCase
 import com.example.amulet.shared.domain.user.usecase.UpdateUserProfileUseCase
 import com.example.amulet.shared.domain.dashboard.usecase.GetDashboardDailyStatsUseCase
 import org.koin.core.module.Module
@@ -88,6 +89,7 @@ private val sharedModule = module {
     factory { ObserveCurrentUserUseCase(get(), get()) }
     factory { ObserveUserByIdUseCase(get()) }
     factory { UpdateUserProfileUseCase(get()) }
+    factory { UpdateLocalUserPreferencesUseCase(get()) }
     factory { FetchUserProfileUseCase(get()) }
 
     // Hugs UseCases

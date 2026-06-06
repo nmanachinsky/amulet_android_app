@@ -66,14 +66,11 @@ fun PracticeEntity.toDomain(): Practice {
         ?: if (steps.isEmpty()) {
             null
         } else {
-            val perStepDurationSec: Int? = when (practiceType) {
-                PracticeType.BREATH, PracticeType.SOUND ->
-                    durationSec?.takeIf { it > 0 && steps.isNotEmpty() }?.let { total ->
-                        (total / steps.size).coerceAtLeast(1)
-                    }
-
-                else -> null
-            }
+            // Без детального скрипта длительность поровну распределяется по шагам -- иначе
+            // логика перехода (computeCurrentStep) при durationSec=null прыгает на последний
+            // шаг и замирает. Касается всех типов, включая MEDITATION.
+            val perStepDurationSec: Int? = durationSec?.takeIf { it > 0 && steps.isNotEmpty() }
+                ?.let { total -> (total / steps.size).coerceAtLeast(1) }
 
             PracticeScript(
                 steps = steps.mapIndexed { index, text ->

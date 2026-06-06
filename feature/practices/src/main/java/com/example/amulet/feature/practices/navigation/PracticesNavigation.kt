@@ -94,7 +94,7 @@ fun NavGraphBuilder.practicesGraph(
             PracticeDetailsRoute(
                 practiceId = id,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToPattern = { patternId -> navController.navigate("patterns/preview/$patternId") },
+                onNavigateToPattern = { patternId -> navController.navigate("patterns/preview?patternId=$patternId") },
                 onNavigateToPlan = { practiceIdForPlan -> navController.navigateToPracticeSchedule(practiceIdForPlan) },
                 onNavigateToCourse = { courseId -> navController.navigateToCourseDetails(courseId) },
                 onNavigateToPairing = onNavigateToPairing,
